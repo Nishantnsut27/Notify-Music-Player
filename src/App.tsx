@@ -106,7 +106,7 @@ function App() {
         } catch (error) {
           console.error('❌ Failed to load trending tracks:', error);
           const errorMsg = error instanceof Error ? error.message : 
-            'Unable to load trending tracks. Jamendo might be experiencing issues. Try searching for specific genres like rap, electronic, or jazz.';
+            '🎪 Trending tracks are temporarily unavailable. Try searching for specific genres like rap, electronic, or jazz.';
           setError(errorMsg);
         } finally {
           setLoading(false);

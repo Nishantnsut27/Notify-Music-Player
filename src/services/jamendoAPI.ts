@@ -12,7 +12,7 @@ interface CacheEntry {
 
 class ApiCache {
   private cache = new Map<string, CacheEntry>();
-  private readonly DEFAULT_TTL = 6 * 60 * 60 * 1000; // 6 hours
+  private readonly DEFAULT_TTL = 6 * 60 * 60 * 1000; 
 
   set(key: string, data: unknown, ttl = this.DEFAULT_TTL) {
     this.cache.set(key, {
@@ -60,7 +60,7 @@ export class JamendoAPI {
       
       const data = await response.json();
       
-      // Test data structure 
+      
       console.log('API test successful:', data.headers?.status);
       
     } catch (error) {
@@ -145,7 +145,7 @@ export class JamendoAPI {
       console.log('📡 API Results:', results.length, 'tracks');
       
       if (results.length === 0) {
-        throw new Error(`No tracks found for "${query}". Jamendo doesn't have this song/artist. Try searching for different keywords like electronic, jazz, hip-hop, or indie music.`);
+        throw new Error(`� No results found for "${query}". Try exploring popular genres like electronic, jazz, hip-hop, or indie music for better discoveries.`);
       }
       
       return results;
@@ -245,14 +245,14 @@ export class JamendoAPI {
       );
 
       if (uniqueTracks.length === 0) {
-        throw new Error('No rap tracks found. Jamendo might be having issues. Try searching for specific genres like electronic, jazz, or indie.');
+        throw new Error('🎶 Trending tracks are currently unavailable. Try searching for specific genres like electronic, jazz, or indie.');
       }
 
       console.log(`🎯 Loaded ${uniqueTracks.length} trending rap tracks`);
       return uniqueTracks.slice(0, limit);
     } catch (error) {
       console.error('Get trending tracks error:', error);
-      throw new Error('Unable to load trending tracks. Please try searching for music instead.');
+      throw new Error('🎵 Trending music is temporarily unavailable. Please try searching for your favorite genres instead.');
     }
   }
 
@@ -283,7 +283,7 @@ export class JamendoAPI {
       return data.results;
     } catch (error) {
       console.error('Get tracks by artist error:', error);
-      throw new Error('Failed to load artist tracks. Please try again.');
+      throw new Error('🎤 Artist tracks are temporarily unavailable. Please try again later.');
     }
   }
 
@@ -299,7 +299,7 @@ export class JamendoAPI {
       return data.results;
     } catch (error) {
       console.error('Get tracks by genre error:', error);
-      throw new Error('Failed to load genre tracks. Please try again.');
+      throw new Error('🎭 Genre tracks are temporarily unavailable. Please try again.');
     }
   }
 
