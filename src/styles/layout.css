@@ -156,7 +156,7 @@
   z-index: 1;
   color: #ffffff;
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-  margin: -1rem -1rem 1rem -1rem;
+  margin: 1rem 0;
 }
 
 .sidebar-logo {
@@ -193,16 +193,21 @@
 }
 
 .sidebar-nav {
-  padding: 0.5rem 0;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .sidebar-nav-list {
   list-style: none;
+  width: 100%;
 }
 
-.sidebar-nav-item {
+.sidebar .sidebar-nav .sidebar-nav-item {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.75rem;
   width: 100%;
   padding: 0.75rem 1.25rem;
@@ -213,7 +218,7 @@
   color: #b3b3b3;
   font-size: 0.9rem;
   font-weight: 500;
-  text-align: left;
+  text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
@@ -240,12 +245,11 @@
   font-size: var(--font-size-xs);
   padding: 0.125rem 0.5rem;
   border-radius: var(--radius-sm);
-  margin-left: auto;
 }
 
 .sidebar-section {
   flex: 1;
-  padding: 0.5rem 0.75rem 1rem;
+  padding: 1rem;
   overflow-y: auto;
 }
 
@@ -269,6 +273,7 @@
   padding: 1rem;
   border-top: 1px solid var(--border);
   margin-top: auto;
+  margin-bottom: 1rem;
 }
 
 .sidebar-attribution {

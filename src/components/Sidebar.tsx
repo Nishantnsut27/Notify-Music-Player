@@ -70,7 +70,7 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile sidebar overlay */}
+      {}
       {isSidebarOpen && (
         <div className="sidebar-overlay" onClick={toggleSidebar} />
       )}

@@ -21,7 +21,7 @@ interface PlayerStore extends PlayerState {
 }
 
 interface SearchStore extends SearchState {
-  // Search actions
+ 
   setQuery: (query: string) => void;
   setResults: (results: Track[]) => void;
   setLoading: (loading: boolean) => void;
@@ -34,7 +34,7 @@ interface PlaylistStore {
   playlists: Playlist[];
   favorites: Track[];
   
-  // Playlist actions
+  
   createPlaylist: (name: string) => void;
   deletePlaylist: (id: string) => void;
   renamePlaylist: (id: string, name: string) => void;
@@ -52,7 +52,7 @@ interface UIStore {
   currentView: 'search' | 'playlists' | 'favorites';
   theme: 'light' | 'dark';
   
-  // UI actions
+ 
   toggleSidebar: () => void;
   setCurrentView: (view: 'search' | 'playlists' | 'favorites') => void;
   setTheme: (theme: 'light' | 'dark') => void;
@@ -316,7 +316,7 @@ export const usePlayerStore = create<AppStore>()(
       try {
         const playlist: Playlist = JSON.parse(data);
         const state = get();
-        playlist.id = Date.now().toString(); // Generate new ID
+        playlist.id = Date.now().toString(); 
         const newPlaylists = [...state.playlists, playlist];
         set({ playlists: newPlaylists });
         saveToLocalStorage('playlists', newPlaylists);
