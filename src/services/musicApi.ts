@@ -1,6 +1,6 @@
 import type { Track } from '../types/types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/music';
+const API_BASE_URL = 'https://notify-music-player.onrender.com/api/music';
 
 export class MusicAPI {
   static async searchTracks(query: string, limit = 20): Promise<Track[]> {

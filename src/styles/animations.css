@@ -46,10 +46,7 @@
   }
 }
 
-@keyframes rotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+
 
 @keyframes slideInUp {
   from {
@@ -192,7 +189,7 @@
   bottom: -4px;
   background: conic-gradient(from 0deg, transparent, rgba(29, 185, 84, 0.3), transparent);
   border-radius: 50%;
-  animation: rotate 3s linear infinite;
+  animation: spin 3s linear infinite;
   z-index: -1;
 }
 

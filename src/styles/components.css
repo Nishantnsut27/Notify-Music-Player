@@ -51,35 +51,7 @@
   font-size: var(--font-size-xs);
 }
 
-.icon-button {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s var(--smooth);
-  position: relative;
-  overflow: hidden;
-}
 
-.icon-button:hover {
-  background: rgba(29, 185, 84, 0.15);
-  color: var(--text);
-  transform: scale(1.1);
-  box-shadow: 0 4px 20px rgba(29, 185, 84, 0.3);
-}
-
-.icon-button.active {
-  background: var(--primary);
-  color: var(--bg);
-  box-shadow: 0 0 20px rgba(29, 185, 84, 0.5);
-}
 
 .icon-button {
   display: inline-flex;
