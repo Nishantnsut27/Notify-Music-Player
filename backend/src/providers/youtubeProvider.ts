@@ -93,7 +93,8 @@ export class YouTubeProvider implements IMusicProvider {
     try {
       const yt = await this.getInnertube();
       const albumData = await yt.music.getAlbum(id);
-      if (!albumData || (!albumData.title && !(albumData as any).header) || (Array.isArray(albumData.contents) && albumData.contents.length === 0)) {
+      const data = albumData as any;
+      if (!data || (!data.title && !data.header) || (Array.isArray(data.contents) && data.contents.length === 0)) {
         return null;
       }
       return MusicNormalizer.normalizeYouTubeAlbum(albumData);
@@ -107,7 +108,8 @@ export class YouTubeProvider implements IMusicProvider {
     try {
       const yt = await this.getInnertube();
       const artistData = await yt.music.getArtist(id);
-      if (!artistData || (!artistData.name && !(artistData as any).header)) {
+      const data = artistData as any;
+      if (!data || (!data.name && !data.header)) {
         return null;
       }
       return MusicNormalizer.normalizeYouTubeArtist(artistData);
@@ -121,7 +123,8 @@ export class YouTubeProvider implements IMusicProvider {
     try {
       const yt = await this.getInnertube();
       const playlistData = await yt.music.getPlaylist(id);
-      if (!playlistData || (!playlistData.title && !(playlistData as any).header) || (Array.isArray(playlistData.contents) && playlistData.contents.length === 0)) {
+      const data = playlistData as any;
+      if (!data || (!data.title && !data.header) || (Array.isArray(data.contents) && data.contents.length === 0)) {
         return null;
       }
       return MusicNormalizer.normalizeYouTubePlaylist(playlistData);
