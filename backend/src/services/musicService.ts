@@ -1,89 +1,124 @@
 import { IMusicProvider } from '../providers/musicProvider.interface.js';
 import { JioSaavnProvider } from '../providers/jiosaavnProvider.js';
+import { YouTubeProvider } from '../providers/youtubeProvider.js';
 import { JamendoProvider } from '../providers/jamendoProvider.js';
 import { Song, Album, Artist, Playlist, Suggestion } from '../models/music.model.js';
 import { MusicNormalizer } from '../normalizers/musicNormalizer.js';
+import { deduplicateSongs, rankSongs } from '../utils/deduplication.js';
 
 export class MusicService {
-  private primaryProvider: IMusicProvider;
-  private fallbackProvider: IMusicProvider;
+  private jiosaavnProvider: IMusicProvider;
+  private youtubeProvider: IMusicProvider;
+  private jamendoProvider: IMusicProvider;
 
   constructor() {
-    this.primaryProvider = new JioSaavnProvider();
-    this.fallbackProvider = new JamendoProvider();
+    this.jiosaavnProvider = new JioSaavnProvider();
+    this.youtubeProvider = new YouTubeProvider();
+    this.jamendoProvider = new JamendoProvider();
   }
 
-  // Fall back to Jamendo when JioSaavn returns no matches
   async search(query: string, limit = 20): Promise<{ songs: Song[]; provider: string }> {
     if (!query || !query.trim()) {
-      return { songs: [], provider: this.primaryProvider.name };
+      return { songs: [], provider: 'jiosaavn,youtube' };
     }
 
-    try {
-      console.log(`[MusicService] Searching primary provider (${this.primaryProvider.name}) for: "${query}"`);
-      const jioResults = await this.primaryProvider.search(query, limit);
+    const trimmedQuery = query.trim();
 
-      if (jioResults.length > 0) {
-        return { songs: jioResults, provider: this.primaryProvider.name };
+    try {
+      const [jioResult, ytResult] = await Promise.allSettled([
+        this.jiosaavnProvider.search(trimmedQuery, limit),
+        this.youtubeProvider.search(trimmedQuery, limit)
+      ]);
+
+      const jioSongs: Song[] = jioResult.status === 'fulfilled' ? jioResult.value : [];
+      const ytSongs: Song[] = ytResult.status === 'fulfilled' ? ytResult.value : [];
+
+      if (jioResult.status === 'rejected') {
+        console.error(`[MusicService] JioSaavn search error:`, jioResult.reason);
+      }
+      if (ytResult.status === 'rejected') {
+        console.error(`[MusicService] YouTube search error:`, ytResult.reason);
       }
 
-      console.log(`[MusicService] No results from ${this.primaryProvider.name}. Falling back to ${this.fallbackProvider.name}...`);
-      const jamendoResults = await this.fallbackProvider.search(query, limit);
-      return { songs: jamendoResults, provider: this.fallbackProvider.name };
+      const merged = [...jioSongs, ...ytSongs];
+      const deduped = deduplicateSongs(merged);
+      const ranked = rankSongs(deduped, trimmedQuery);
+
+      if (ranked.length > 0) {
+        return { songs: ranked.slice(0, limit), provider: 'jiosaavn,youtube' };
+      }
+
+      console.log(`[MusicService] No usable results from JioSaavn or YouTube. Attempting Jamendo fallback...`);
+      const jamendoSongs = await this.jamendoProvider.search(trimmedQuery, limit);
+      return { songs: jamendoSongs, provider: 'jamendo' };
     } catch (error) {
-      console.error(`[MusicService] Search error with primary provider, attempting fallback:`, error);
-      const jamendoResults = await this.fallbackProvider.search(query, limit);
-      return { songs: jamendoResults, provider: this.fallbackProvider.name };
+      console.error(`[MusicService] Search error, attempting Jamendo fallback:`, error);
+      const jamendoSongs = await this.jamendoProvider.search(trimmedQuery, limit);
+      return { songs: jamendoSongs, provider: 'jamendo' };
     }
   }
 
   async getSongById(id: string): Promise<Song | null> {
     if (!id) return null;
 
-    let song = await this.primaryProvider.getSongById(id);
+    let song = await this.jiosaavnProvider.getSongById(id);
     if (song) return song;
 
-    console.log(`[MusicService] Song ID ${id} not found in ${this.primaryProvider.name}. Checking fallback...`);
-    song = await this.fallbackProvider.getSongById(id);
+    song = await this.youtubeProvider.getSongById(id);
+    if (song) return song;
+
+    song = await this.jamendoProvider.getSongById(id);
     return song;
   }
 
   async getAlbumById(id: string): Promise<Album | null> {
     if (!id) return null;
 
-    let album = await this.primaryProvider.getAlbumById(id);
+    let album = await this.jiosaavnProvider.getAlbumById(id);
     if (album) return album;
 
-    album = await this.fallbackProvider.getAlbumById(id);
+    album = await this.youtubeProvider.getAlbumById(id);
+    if (album) return album;
+
+    album = await this.jamendoProvider.getAlbumById(id);
     return album;
   }
 
   async getArtistById(id: string): Promise<Artist | null> {
     if (!id) return null;
 
-    let artist = await this.primaryProvider.getArtistById(id);
+    let artist = await this.jiosaavnProvider.getArtistById(id);
     if (artist) return artist;
 
-    artist = await this.fallbackProvider.getArtistById(id);
+    artist = await this.youtubeProvider.getArtistById(id);
+    if (artist) return artist;
+
+    artist = await this.jamendoProvider.getArtistById(id);
     return artist;
   }
 
   async getPlaylistById(id: string): Promise<Playlist | null> {
     if (!id) return null;
 
-    let playlist = await this.primaryProvider.getPlaylistById(id);
+    let playlist = await this.jiosaavnProvider.getPlaylistById(id);
     if (playlist) return playlist;
 
-    playlist = await this.fallbackProvider.getPlaylistById(id);
+    playlist = await this.youtubeProvider.getPlaylistById(id);
+    if (playlist) return playlist;
+
+    playlist = await this.jamendoProvider.getPlaylistById(id);
     return playlist;
   }
 
   async getSuggestions(id: string, limit = 10): Promise<Suggestion[]> {
     if (!id) return [];
 
-    let songs = await this.primaryProvider.getSuggestions(id, limit);
+    let songs = await this.jiosaavnProvider.getSuggestions(id, limit);
     if (songs.length === 0) {
-      songs = await this.fallbackProvider.getSuggestions(id, limit);
+      songs = await this.youtubeProvider.getSuggestions(id, limit);
+    }
+    if (songs.length === 0) {
+      songs = await this.jamendoProvider.getSuggestions(id, limit);
     }
 
     return songs.map(song => MusicNormalizer.normalizeSuggestion(song));
@@ -97,6 +132,6 @@ export class MusicService {
         return res;
       }
     }
-    return { songs: [], provider: this.primaryProvider.name };
+    return { songs: [], provider: 'jiosaavn,youtube' };
   }
 }
