@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDebounce } from '../hooks/useDebounce';
 import { usePlayerStore } from '../store/playerStore';
-import { JamendoAPI } from '../services/jamendoAPI';
+import { MusicAPI } from '../services/musicApi';
 
 export function SearchBar() {
   const [query, setQuery] = useState('');
@@ -30,13 +30,13 @@ export function SearchBar() {
     }
     
     try {
-      const tracks = await JamendoAPI.searchTracks(searchQuery);
+      const tracks = await MusicAPI.searchTracks(searchQuery);
       setResults(tracks);
       setError(null);
     } catch (error) {
       console.error('🔍 Search error:', error);
       const errorMessage = error instanceof Error ? error.message : 
-        `Sorry, we couldn't find "${searchQuery}" on Jamendo. Try searching for:\n• Electronic music\n• Jazz or Blues\n• Hip-hop or Rap\n• Indie or Alternative\n• Or browse our trending tracks below`;
+        `Sorry, we couldn't find matches for "${searchQuery}". Try searching for popular songs, artists, or genres like rap, electronic, jazz, or pop.`;
       setError(errorMessage);
       setResults([]);
     } finally {
@@ -171,7 +171,7 @@ export function SearchBar() {
           type="text"
           value={query}
           onChange={handleInputChange}
-          placeholder="Search genres: rap, electronic, jazz, blues, indie..."
+          placeholder="Search song, artist..."
           style={{
             flex: 1,
             background: 'transparent',

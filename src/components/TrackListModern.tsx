@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Track } from '../types/types';
 import { usePlayerStore } from '../store/playerStore';
-import { formatDuration, getJamendoTrackUrl, getJamendoArtistUrl } from '../services/jamendoAPI';
+import { formatDuration, getArtistUrl } from '../services/musicApi';
 
 interface TrackListProps {
   tracks: Track[];
@@ -230,7 +230,7 @@ export function TrackListModern({
               <h4 className="track-title-modern">{track.name}</h4>
               <p className="track-artist-modern">
                 <a 
-                  href={getJamendoArtistUrl(track.artist_id)}
+                  href={getArtistUrl(track.artist_id)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="artist-link-modern"
@@ -377,38 +377,7 @@ export function TrackListModern({
                 </div>
               )}
 
-              <a
-                href={getJamendoTrackUrl(track.id)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="icon-button"
-                aria-label="Open on Jamendo"
-                style={{
-                  color: '#1ed760',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.1)';
-                  e.currentTarget.style.color = '#22c55e';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.color = '#1ed760';
-                }}
-              >
-                <svg 
-                  width="20" 
-                  height="20" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2"
-                >
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                  <polyline points="15,3 21,3 21,9" />
-                  <line x1="10" y1="14" x2="21" y2="3" />
-                </svg>
-              </a>
+
             </div>
           </div>
         ))}

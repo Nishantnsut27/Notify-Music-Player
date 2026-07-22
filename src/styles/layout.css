@@ -122,7 +122,7 @@
   top: 0;
   left: 0;
   width: 260px;
-  height: 100vh;
+  height: calc(100vh - var(--player-height));
   background: linear-gradient(180deg, rgba(18, 18, 18, 0.95) 0%, rgba(0, 0, 0, 0.95) 100%);
   backdrop-filter: blur(20px);
   border-right: none;
@@ -130,7 +130,7 @@
   flex-direction: column;
   transition: all 0.3s var(--smooth);
   z-index: 95;
-  overflow-y: auto;
+  overflow: hidden;
   transform: translateX(-100%);
   margin: 0;
   padding: 0;
@@ -148,7 +148,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
@@ -156,7 +156,8 @@
   z-index: 1;
   color: #ffffff;
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-  margin: 1rem 0;
+  margin: 0.5rem 0;
+  flex-shrink: 0;
 }
 
 .sidebar-logo {
@@ -193,15 +194,19 @@
 }
 
 .sidebar-nav {
-  padding: 1rem;
+  padding: 0.5rem 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+  flex-shrink: 0;
 }
 
 .sidebar-nav-list {
   list-style: none;
   width: 100%;
+  padding: 0;
+  margin: 0;
 }
 
 .sidebar .sidebar-nav .sidebar-nav-item {
@@ -210,25 +215,25 @@
   justify-content: center;
   gap: 0.75rem;
   width: 100%;
-  padding: 0.75rem 1.25rem;
-  margin: 0 0.75rem;
+  padding: 0.65rem 1rem;
+  margin: 0 auto;
   background: none;
   border: none;
   border-radius: 8px;
   color: #b3b3b3;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 500;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .sidebar-nav-item:hover {
   background-color: rgba(255, 255, 255, 0.1);
   color: #ffffff;
-  transform: translateX(4px);
 }
 
 .sidebar-nav-item-active {
@@ -236,7 +241,6 @@
   color: #000000;
   font-weight: 600;
   box-shadow: 0 4px 15px rgba(29, 185, 84, 0.3);
-  transform: translateX(4px);
 }
 
 .sidebar-badge {
@@ -249,8 +253,9 @@
 
 .sidebar-section {
   flex: 1;
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .sidebar-section-header {
@@ -270,17 +275,20 @@
 }
 
 .sidebar-footer {
-  padding: 1rem;
+  padding: 0.5rem 0.75rem;
   border-top: 1px solid var(--border);
   margin-top: auto;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
+  flex-shrink: 0;
+  background: rgba(10, 10, 10, 0.8);
 }
 
 .sidebar-attribution {
-  font-size: var(--font-size-xs);
+  font-size: 0.7rem;
   color: var(--text-secondary);
   text-align: center;
-  line-height: 1.4;
+  line-height: 1.3;
+  margin: 0;
 }
 
 .sidebar-link {

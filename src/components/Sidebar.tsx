@@ -268,17 +268,10 @@ export function Sidebar() {
 
         <div className="sidebar-footer">
           <p className="sidebar-attribution">
-            Music provided by{' '}
-            <a 
-              href="https://www.jamendo.com" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="sidebar-link"
-            >
-              <span style={{ color: '#ffffff !important' }}>Jamendo</span>
-            </a>
+            Powered by{' '}
+            <span style={{ color: '#1ed760', fontWeight: 600 }}>Notify Music Engine</span>
             <br />
-            <span className="text-muted">(Creative Commons)</span>
+            <span className="text-muted">(Multi-Provider Streaming)</span>
           </p>
         </div>
       </aside>
