@@ -54,7 +54,7 @@ app.use((_req, res) => {
 app.use(errorHandlerMiddleware);
 
 app.listen(config.port, () => {
-  console.log(`🚀 Notify Music Player Backend running on http://localhost:${config.port}`);
+  console.log(`Notify Music Player Backend running on http://localhost:${config.port}`);
 });
 
 export default app;
