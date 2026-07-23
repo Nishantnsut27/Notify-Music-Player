@@ -8,5 +8,13 @@ export const config = {
   jiosaavnApiUrl: process.env.JIOSAAVN_API_URL || 'https://saavn.sumit.co',
   jamendoApiUrl: process.env.JAMENDO_API_URL || 'https://api.jamendo.com/v3.0',
   jamendoClientId: process.env.JAMENDO_CLIENT_ID || '2fa42d8a',
-  requestTimeout: 10000
+  requestTimeoutMs: parseInt(process.env.REQUEST_TIMEOUT_MS || '8000', 10),
+  allowedOrigins: (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:3000').split(','),
+  rateLimitSearchWindowMs: parseInt(process.env.RATE_LIMIT_SEARCH_WINDOW_MS || '60000', 10),
+  rateLimitSearchMax: parseInt(process.env.RATE_LIMIT_SEARCH_MAX || '30', 10),
+  rateLimitMetadataWindowMs: parseInt(process.env.RATE_LIMIT_METADATA_WINDOW_MS || '60000', 10),
+  rateLimitMetadataMax: parseInt(process.env.RATE_LIMIT_METADATA_MAX || '100', 10),
+  slowDownSearchDelayAfter: parseInt(process.env.SLOW_DOWN_SEARCH_DELAY_AFTER || '15', 10),
+  slowDownSearchDelayMs: parseInt(process.env.SLOW_DOWN_SEARCH_DELAY_MS || '500', 10),
+  cacheTtlMs: parseInt(process.env.CACHE_TTL_MS || '300000', 10)
 };

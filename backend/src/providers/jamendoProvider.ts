@@ -4,8 +4,6 @@ import { Song, Album, Artist, Playlist } from '../models/music.model.js';
 import { MusicNormalizer } from '../normalizers/musicNormalizer.js';
 import { config } from '../config/config.js';
 
-// Keep provider implementations isolated for easier maintenance
-
 export class JamendoProvider implements IMusicProvider {
   readonly name = 'jamendo' as const;
   private client: AxiosInstance;
@@ -13,7 +11,7 @@ export class JamendoProvider implements IMusicProvider {
   constructor() {
     this.client = axios.create({
       baseURL: config.jamendoApiUrl,
-      timeout: config.requestTimeout,
+      timeout: config.requestTimeoutMs,
       headers: {
         'Accept': 'application/json'
       }
@@ -64,7 +62,7 @@ export class JamendoProvider implements IMusicProvider {
       let allTracks: Song[] = [];
       searches.forEach((res) => {
         if (res.status === 'fulfilled' && Array.isArray(res.value.data?.results)) {
-          const songs = res.value.data.results.map((raw: any) => MusicNormalizer.normalizeJamendoSong(raw));
+          const songs = res.value.data.results.map((raw: unknown) => MusicNormalizer.normalizeJamendoSong(raw));
           allTracks.push(...songs);
         }
       });
@@ -74,8 +72,7 @@ export class JamendoProvider implements IMusicProvider {
       );
 
       return uniqueTracks.slice(0, limit);
-    } catch (error) {
-      console.error('[JamendoProvider] Search error:', error instanceof Error ? error.message : error);
+    } catch {
       return [];
     }
   }
@@ -94,8 +91,7 @@ export class JamendoProvider implements IMusicProvider {
         return MusicNormalizer.normalizeJamendoSong(results[0]);
       }
       return null;
-    } catch (error) {
-      console.error(`[JamendoProvider] Get song by ID error (${id}):`, error instanceof Error ? error.message : error);
+    } catch {
       return null;
     }
   }
@@ -111,7 +107,7 @@ export class JamendoProvider implements IMusicProvider {
       });
       const results = response.data?.results;
       if (Array.isArray(results) && results.length > 0) {
-        const songs = results.map((raw: any) => MusicNormalizer.normalizeJamendoSong(raw));
+        const songs = results.map((raw: unknown) => MusicNormalizer.normalizeJamendoSong(raw));
         const first = results[0];
         return {
           id: first.album_id || id,
@@ -125,8 +121,7 @@ export class JamendoProvider implements IMusicProvider {
         };
       }
       return null;
-    } catch (error) {
-      console.error(`[JamendoProvider] Get album by ID error (${id}):`, error instanceof Error ? error.message : error);
+    } catch {
       return null;
     }
   }
@@ -143,7 +138,7 @@ export class JamendoProvider implements IMusicProvider {
       });
       const results = response.data?.results;
       if (Array.isArray(results) && results.length > 0) {
-        const topSongs = results.map((raw: any) => MusicNormalizer.normalizeJamendoSong(raw));
+        const topSongs = results.map((raw: unknown) => MusicNormalizer.normalizeJamendoSong(raw));
         const first = results[0];
         return {
           id: first.artist_id || id,
@@ -154,8 +149,7 @@ export class JamendoProvider implements IMusicProvider {
         };
       }
       return null;
-    } catch (error) {
-      console.error(`[JamendoProvider] Get artist by ID error (${id}):`, error instanceof Error ? error.message : error);
+    } catch {
       return null;
     }
   }
@@ -169,7 +163,7 @@ export class JamendoProvider implements IMusicProvider {
       if (Array.isArray(results) && results.length > 0) {
         const pl = results[0];
         const tracks = Array.isArray(pl.tracks)
-          ? pl.tracks.map((raw: any) => MusicNormalizer.normalizeJamendoSong(raw))
+          ? pl.tracks.map((raw: unknown) => MusicNormalizer.normalizeJamendoSong(raw))
           : [];
         return {
           id: pl.id || id,
@@ -179,8 +173,7 @@ export class JamendoProvider implements IMusicProvider {
         };
       }
       return null;
-    } catch (error) {
-      console.error(`[JamendoProvider] Get playlist by ID error (${id}):`, error instanceof Error ? error.message : error);
+    } catch {
       return null;
     }
   }
@@ -200,11 +193,10 @@ export class JamendoProvider implements IMusicProvider {
       });
       const results = response.data?.results;
       if (Array.isArray(results) && results.length > 0) {
-        return results.map((raw: any) => MusicNormalizer.normalizeJamendoSong(raw));
+        return results.map((raw: unknown) => MusicNormalizer.normalizeJamendoSong(raw));
       }
       return [];
-    } catch (error) {
-      console.error(`[JamendoProvider] Get suggestions error (${id}):`, error instanceof Error ? error.message : error);
+    } catch {
       return [];
     }
   }

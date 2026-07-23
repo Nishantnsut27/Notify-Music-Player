@@ -5,6 +5,8 @@ import { JamendoProvider } from '../providers/jamendoProvider.js';
 import { Song, Album, Artist, Playlist, Suggestion } from '../models/music.model.js';
 import { MusicNormalizer } from '../normalizers/musicNormalizer.js';
 import { deduplicateSongs, rankSongs } from '../utils/deduplication.js';
+import { discoveryService } from './discoveryService.js';
+import { globalCacheService } from './cacheService.js';
 
 export class MusicService {
   private jiosaavnProvider: IMusicProvider;
@@ -22,116 +24,129 @@ export class MusicService {
       return { songs: [], provider: 'jiosaavn,youtube' };
     }
 
-    const trimmedQuery = query.trim();
+    const trimmedQuery = query.trim().toLowerCase();
+    const cacheKey = `search:${trimmedQuery}:${limit}`;
 
-    try {
-      const [jioResult, ytResult] = await Promise.allSettled([
-        this.jiosaavnProvider.search(trimmedQuery, limit),
-        this.youtubeProvider.search(trimmedQuery, limit)
-      ]);
+    return globalCacheService.getOrFetch(cacheKey, async () => {
+      try {
+        const [jioResult, ytResult] = await Promise.allSettled([
+          this.jiosaavnProvider.search(trimmedQuery, limit),
+          this.youtubeProvider.search(trimmedQuery, limit)
+        ]);
 
-      const jioSongs: Song[] = jioResult.status === 'fulfilled' ? jioResult.value : [];
-      const ytSongs: Song[] = ytResult.status === 'fulfilled' ? ytResult.value : [];
+        const jioSongs: Song[] = jioResult.status === 'fulfilled' ? jioResult.value : [];
+        const ytSongs: Song[] = ytResult.status === 'fulfilled' ? ytResult.value : [];
 
-      if (jioResult.status === 'rejected') {
-        console.error(`[MusicService] JioSaavn search error:`, jioResult.reason);
+        const merged = [...jioSongs, ...ytSongs];
+        const deduped = deduplicateSongs(merged);
+        const ranked = rankSongs(deduped, trimmedQuery);
+
+        if (ranked.length > 0) {
+          return { songs: ranked.slice(0, limit), provider: 'jiosaavn,youtube' };
+        }
+
+        const jamendoSongs = await this.jamendoProvider.search(trimmedQuery, limit);
+        return { songs: jamendoSongs, provider: 'jamendo' };
+      } catch {
+        const jamendoSongs = await this.jamendoProvider.search(trimmedQuery, limit);
+        return { songs: jamendoSongs, provider: 'jamendo' };
       }
-      if (ytResult.status === 'rejected') {
-        console.error(`[MusicService] YouTube search error:`, ytResult.reason);
-      }
-
-      const merged = [...jioSongs, ...ytSongs];
-      const deduped = deduplicateSongs(merged);
-      const ranked = rankSongs(deduped, trimmedQuery);
-
-      if (ranked.length > 0) {
-        return { songs: ranked.slice(0, limit), provider: 'jiosaavn,youtube' };
-      }
-
-      console.log(`[MusicService] No usable results from JioSaavn or YouTube. Attempting Jamendo fallback...`);
-      const jamendoSongs = await this.jamendoProvider.search(trimmedQuery, limit);
-      return { songs: jamendoSongs, provider: 'jamendo' };
-    } catch (error) {
-      console.error(`[MusicService] Search error, attempting Jamendo fallback:`, error);
-      const jamendoSongs = await this.jamendoProvider.search(trimmedQuery, limit);
-      return { songs: jamendoSongs, provider: 'jamendo' };
-    }
+    });
   }
 
   async getSongById(id: string): Promise<Song | null> {
     if (!id) return null;
+    const cacheKey = `song:${id}`;
 
-    let song = await this.jiosaavnProvider.getSongById(id);
-    if (song) return song;
+    return globalCacheService.getOrFetch(cacheKey, async () => {
+      let song = await this.jiosaavnProvider.getSongById(id);
+      if (song) return song;
 
-    song = await this.youtubeProvider.getSongById(id);
-    if (song) return song;
+      song = await this.youtubeProvider.getSongById(id);
+      if (song) return song;
 
-    song = await this.jamendoProvider.getSongById(id);
-    return song;
+      song = await this.jamendoProvider.getSongById(id);
+      return song;
+    });
   }
 
   async getAlbumById(id: string): Promise<Album | null> {
     if (!id) return null;
+    const cacheKey = `album:${id}`;
 
-    let album = await this.jiosaavnProvider.getAlbumById(id);
-    if (album) return album;
+    return globalCacheService.getOrFetch(cacheKey, async () => {
+      let album = await this.jiosaavnProvider.getAlbumById(id);
+      if (album) return album;
 
-    album = await this.youtubeProvider.getAlbumById(id);
-    if (album) return album;
+      album = await this.youtubeProvider.getAlbumById(id);
+      if (album) return album;
 
-    album = await this.jamendoProvider.getAlbumById(id);
-    return album;
+      album = await this.jamendoProvider.getAlbumById(id);
+      return album;
+    });
   }
 
   async getArtistById(id: string): Promise<Artist | null> {
     if (!id) return null;
+    const cacheKey = `artist:${id}`;
 
-    let artist = await this.jiosaavnProvider.getArtistById(id);
-    if (artist) return artist;
+    return globalCacheService.getOrFetch(cacheKey, async () => {
+      let artist = await this.jiosaavnProvider.getArtistById(id);
+      if (artist) return artist;
 
-    artist = await this.youtubeProvider.getArtistById(id);
-    if (artist) return artist;
+      artist = await this.youtubeProvider.getArtistById(id);
+      if (artist) return artist;
 
-    artist = await this.jamendoProvider.getArtistById(id);
-    return artist;
+      artist = await this.jamendoProvider.getArtistById(id);
+      return artist;
+    });
   }
 
   async getPlaylistById(id: string): Promise<Playlist | null> {
     if (!id) return null;
+    const cacheKey = `playlist:${id}`;
 
-    let playlist = await this.jiosaavnProvider.getPlaylistById(id);
-    if (playlist) return playlist;
+    return globalCacheService.getOrFetch(cacheKey, async () => {
+      let playlist = await this.jiosaavnProvider.getPlaylistById(id);
+      if (playlist) return playlist;
 
-    playlist = await this.youtubeProvider.getPlaylistById(id);
-    if (playlist) return playlist;
+      playlist = await this.youtubeProvider.getPlaylistById(id);
+      if (playlist) return playlist;
 
-    playlist = await this.jamendoProvider.getPlaylistById(id);
-    return playlist;
+      playlist = await this.jamendoProvider.getPlaylistById(id);
+      return playlist;
+    });
   }
 
   async getSuggestions(id: string, limit = 10): Promise<Suggestion[]> {
     if (!id) return [];
+    const cacheKey = `suggestions:${id}:${limit}`;
 
-    let songs = await this.jiosaavnProvider.getSuggestions(id, limit);
-    if (songs.length === 0) {
-      songs = await this.youtubeProvider.getSuggestions(id, limit);
-    }
-    if (songs.length === 0) {
-      songs = await this.jamendoProvider.getSuggestions(id, limit);
-    }
+    return globalCacheService.getOrFetch(cacheKey, async () => {
+      let songs = await this.jiosaavnProvider.getSuggestions(id, limit);
+      if (songs.length === 0) {
+        songs = await this.youtubeProvider.getSuggestions(id, limit);
+      }
+      if (songs.length === 0) {
+        songs = await this.jamendoProvider.getSuggestions(id, limit);
+      }
 
-    return songs.map(song => MusicNormalizer.normalizeSuggestion(song));
+      return songs.map(song => MusicNormalizer.normalizeSuggestion(song));
+    });
   }
 
   async getTrending(limit = 20): Promise<{ songs: Song[]; provider: string }> {
-    const trendingQueries = ['trending', 'top hits', 'rap', 'pop'];
-    for (const q of trendingQueries) {
-      const res = await this.search(q, limit);
-      if (res.songs.length > 0) {
-        return res;
+    const maxAttempts = 3;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const keyword = discoveryService.getNextKeyword();
+      const result = await this.search(keyword, limit);
+
+      if (result.songs.length > 0) {
+        return result;
       }
     }
+
     return { songs: [], provider: 'jiosaavn,youtube' };
   }
 }

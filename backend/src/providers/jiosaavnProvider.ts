@@ -4,8 +4,6 @@ import { Song, Album, Artist, Playlist } from '../models/music.model.js';
 import { MusicNormalizer } from '../normalizers/musicNormalizer.js';
 import { config } from '../config/config.js';
 
-// Keep provider implementations isolated for easier maintenance
-
 export class JioSaavnProvider implements IMusicProvider {
   readonly name = 'jiosaavn' as const;
   private client: AxiosInstance;
@@ -13,7 +11,7 @@ export class JioSaavnProvider implements IMusicProvider {
   constructor() {
     this.client = axios.create({
       baseURL: config.jiosaavnApiUrl,
-      timeout: config.requestTimeout,
+      timeout: config.requestTimeoutMs,
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'NotifyMusicPlayer/1.0'
@@ -32,9 +30,8 @@ export class JioSaavnProvider implements IMusicProvider {
         return [];
       }
 
-      return results.map((rawSong: any) => MusicNormalizer.normalizeJioSaavnSong(rawSong));
-    } catch (error) {
-      console.error('[JioSaavnProvider] Search error:', error instanceof Error ? error.message : error);
+      return results.map((rawSong: unknown) => MusicNormalizer.normalizeJioSaavnSong(rawSong));
+    } catch {
       return [];
     }
   }
@@ -47,8 +44,7 @@ export class JioSaavnProvider implements IMusicProvider {
         return MusicNormalizer.normalizeJioSaavnSong(songs[0]);
       }
       return null;
-    } catch (error) {
-      console.error(`[JioSaavnProvider] Get song by ID error (${id}):`, error instanceof Error ? error.message : error);
+    } catch {
       return null;
     }
   }
@@ -63,8 +59,7 @@ export class JioSaavnProvider implements IMusicProvider {
         return MusicNormalizer.normalizeJioSaavnAlbum(data);
       }
       return null;
-    } catch (error) {
-      console.error(`[JioSaavnProvider] Get album by ID error (${id}):`, error instanceof Error ? error.message : error);
+    } catch {
       return null;
     }
   }
@@ -77,8 +72,7 @@ export class JioSaavnProvider implements IMusicProvider {
         return MusicNormalizer.normalizeJioSaavnArtist(data);
       }
       return null;
-    } catch (error) {
-      console.error(`[JioSaavnProvider] Get artist by ID error (${id}):`, error instanceof Error ? error.message : error);
+    } catch {
       return null;
     }
   }
@@ -93,8 +87,7 @@ export class JioSaavnProvider implements IMusicProvider {
         return MusicNormalizer.normalizeJioSaavnPlaylist(data);
       }
       return null;
-    } catch (error) {
-      console.error(`[JioSaavnProvider] Get playlist by ID error (${id}):`, error instanceof Error ? error.message : error);
+    } catch {
       return null;
     }
   }
@@ -106,11 +99,10 @@ export class JioSaavnProvider implements IMusicProvider {
       });
       const results = response.data?.data;
       if (Array.isArray(results) && results.length > 0) {
-        return results.map((rawSong: any) => MusicNormalizer.normalizeJioSaavnSong(rawSong));
+        return results.map((rawSong: unknown) => MusicNormalizer.normalizeJioSaavnSong(rawSong));
       }
       return [];
-    } catch (error) {
-      console.error(`[JioSaavnProvider] Get suggestions error (${id}):`, error instanceof Error ? error.message : error);
+    } catch {
       return [];
     }
   }
