@@ -52,7 +52,6 @@ interface UIStore {
   currentView: 'search' | 'playlists' | 'favorites';
   theme: 'light' | 'dark';
   
- 
   toggleSidebar: () => void;
   setCurrentView: (view: 'search' | 'playlists' | 'favorites') => void;
   setTheme: (theme: 'light' | 'dark') => void;
@@ -99,7 +98,7 @@ export const usePlayerStore = create<AppStore>()(
     playlists: loadFromLocalStorage('playlists', []),
     favorites: loadFromLocalStorage('favorites', []),
 
-    isSidebarOpen: true,
+    isSidebarOpen: typeof window !== 'undefined' ? window.innerWidth > 768 : true,
     currentView: 'search',
     theme: loadFromLocalStorage('theme', 'light'),
 

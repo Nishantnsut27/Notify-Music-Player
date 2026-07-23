@@ -3,10 +3,13 @@ import { SearchBar } from './components/SearchBar';
 import { TrackListModern } from './components/TrackListModern';
 import { PlayerControls } from './components/PlayerControls';
 import { Sidebar } from './components/Sidebar';
+import { ConfirmModal } from './components/ConfirmModal';
+import { PlaylistMenu } from './components/PlaylistMenu';
 import { usePlayerStore } from './store/playerStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { usePlayer } from './hooks/usePlayer';
 import { MusicAPI } from './services/musicApi';
+import type { Playlist } from './types/types';
 
 import './styles/variables.css';
 import './styles/layout.css';
@@ -18,6 +21,8 @@ function App() {
   const [showPlaylistActions, setShowPlaylistActions] = useState<string | null>(null);
   const [editingPlaylist, setEditingPlaylist] = useState<string | null>(null);
   const [editPlaylistName, setEditPlaylistName] = useState('');
+  const [playlistToDelete, setPlaylistToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [showClearFavoritesModal, setShowClearFavoritesModal] = useState(false);
 
   const {
     currentView,
@@ -73,9 +78,38 @@ function App() {
   };
 
   const handleDeletePlaylist = (playlistId: string, playlistName: string) => {
-    if (window.confirm(`Are you sure you want to delete "${playlistName}"? This action cannot be undone.`)) {
-      deletePlaylist(playlistId);
+    setPlaylistToDelete({ id: playlistId, name: playlistName });
+    setShowPlaylistActions(null);
+  };
+
+  const confirmDeletePlaylist = () => {
+    if (playlistToDelete) {
+      deletePlaylist(playlistToDelete.id);
+      setPlaylistToDelete(null);
     }
+  };
+
+  const confirmClearFavorites = () => {
+    clearFavorites();
+    setShowClearFavoritesModal(false);
+  };
+
+  const handleExportPlaylist = (playlistId: string) => {
+    const playlist = playlists.find(p => p.id === playlistId);
+    if (!playlist) return;
+
+    const dataStr = JSON.stringify(playlist, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${playlist.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_playlist.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
     setShowPlaylistActions(null);
   };
 
@@ -196,7 +230,7 @@ function App() {
                 {favorites.length > 0 && (
                   <button
                     className="clear-favorites-btn"
-                    onClick={() => clearFavorites()}
+                    onClick={() => setShowClearFavoritesModal(true)}
                     title="Clear all favorites"
                   >
                     Clear All
@@ -302,7 +336,7 @@ function App() {
                       </div>
 
                       {editingPlaylist !== playlist.id && (
-                        <div className="playlist-card-actions">
+                        <div className="playlist-card-actions" style={{ position: 'relative' }}>
                           <button
                             onClick={() => setShowPlaylistActions(
                               showPlaylistActions === playlist.id ? null : playlist.id
@@ -317,32 +351,14 @@ function App() {
                             </svg>
                           </button>
 
-                          {showPlaylistActions === playlist.id && (
-                            <div className="playlist-actions-menu">
-                              <button
-                                onClick={() => handleEditPlaylist(playlist.id, playlist.name)}
-                                className="playlist-action-item"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                </svg>
-                                Edit Name
-                              </button>
-                              <button
-                                onClick={() => handleDeletePlaylist(playlist.id, playlist.name)}
-                                className="playlist-action-item playlist-action-delete"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <polyline points="3,6 5,6 21,6" />
-                                  <path d="M19,6v14a2,2 0 0,1-2,2H7a2,2 0 0,1-2-2V6m3,0V4a2,2 0 0,1,2-2h4a2,2 0 0,1,2,2v2" />
-                                  <line x1="10" y1="11" x2="10" y2="17" />
-                                  <line x1="14" y1="11" x2="14" y2="17" />
-                                </svg>
-                                Delete Playlist
-                              </button>
-                            </div>
-                          )}
+                          <PlaylistMenu
+                            playlist={playlist}
+                            isOpen={showPlaylistActions === playlist.id}
+                            onClose={() => setShowPlaylistActions(null)}
+                            onRename={(p: Playlist) => handleEditPlaylist(p.id, p.name)}
+                            onExport={(id: string) => handleExportPlaylist(id)}
+                            onDelete={(p: Playlist) => handleDeletePlaylist(p.id, p.name)}
+                          />
                         </div>
                       )}
                     </div>
@@ -419,6 +435,32 @@ function App() {
       </main>
 
       <PlayerControls />
+
+      {playlistToDelete && (
+        <ConfirmModal
+          isOpen={!!playlistToDelete}
+          title="Delete Playlist"
+          message={`Are you sure you want to delete "${playlistToDelete.name}"? This action cannot be undone.`}
+          confirmText="Delete Playlist"
+          cancelText="Cancel"
+          variant="danger"
+          onConfirm={confirmDeletePlaylist}
+          onCancel={() => setPlaylistToDelete(null)}
+        />
+      )}
+
+      {showClearFavoritesModal && (
+        <ConfirmModal
+          isOpen={showClearFavoritesModal}
+          title="Clear All Favorites"
+          message="Are you sure you want to remove all tracks from your favorites?"
+          confirmText="Clear All"
+          cancelText="Cancel"
+          variant="danger"
+          onConfirm={confirmClearFavorites}
+          onCancel={() => setShowClearFavoritesModal(false)}
+        />
+      )}
     </div>
   );
 }

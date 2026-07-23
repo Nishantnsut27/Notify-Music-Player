@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { usePlayer } from '../hooks/usePlayer';
 import { usePlayerStore } from '../store/playerStore';
 import { formatDuration } from '../services/jamendoAPI';
+import { AudioVisualizer } from './AudioVisualizer';
 
 export function PlayerControls() {
   const [showVolume, setShowVolume] = useState(false);
@@ -10,7 +11,7 @@ export function PlayerControls() {
   const [volumeChangeIndicator, setVolumeChangeIndicator] = useState(false);
   const progressRef = useRef<HTMLDivElement>(null);
   const volumeRef = useRef<HTMLDivElement>(null);
-  const lastSeekTime = useRef<number>(0);
+  const volumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const {
     currentTrack,
@@ -34,69 +35,105 @@ export function PlayerControls() {
     clearQueue
   } = usePlayerStore();
 
+  const isDraggingProgress = useRef(false);
+  const isDraggingVolume = useRef(false);
+
   const progress = duration > 0 && !isNaN(duration) && !isNaN(currentTime) ? 
     Math.max(0, Math.min(100, (currentTime / duration) * 100)) : 0;
   const volumePercent = volume;
 
   const isFavorite = currentTrack ? favorites.some(f => f.id === currentTrack.id) : false;
 
-  const handleProgressClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!progressRef.current || duration === 0 || !currentTrack) return;
-    
-    const currentTime = Date.now();
-    if (currentTime - lastSeekTime.current < 100) {
-      return;
+  const handleVolumeMouseEnter = useCallback(() => {
+    if (volumeTimeoutRef.current) {
+      clearTimeout(volumeTimeoutRef.current);
+      volumeTimeoutRef.current = null;
     }
-    lastSeekTime.current = currentTime;
-    
+    setShowVolume(true);
+  }, []);
+
+  const handleVolumeMouseLeave = useCallback(() => {
+    if (volumeTimeoutRef.current) {
+      clearTimeout(volumeTimeoutRef.current);
+    }
+    volumeTimeoutRef.current = setTimeout(() => {
+      setShowVolume(false);
+    }, 250);
+  }, []);
+
+  const updateProgressFromPointer = useCallback((e: React.PointerEvent | PointerEvent) => {
+    if (!progressRef.current || duration === 0 || !currentTrack) return;
     const rect = progressRef.current.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const percent = Math.max(0, Math.min(1, clickX / rect.width));
     const newTime = percent * duration;
-    
-    console.log('🎯 Progress clicked:', { 
-      clickX, 
-      percent: (percent * 100).toFixed(1) + '%', 
-      newTime: newTime.toFixed(1) + 's', 
-      duration: duration.toFixed(1) + 's' 
-    });
-    
     seek(newTime);
+    setHoverProgress(percent * 100);
   }, [duration, seek, currentTrack]);
 
-  const handleProgressMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  const handleProgressPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!currentTrack || duration === 0) return;
+    isDraggingProgress.current = true;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    updateProgressFromPointer(e);
+  }, [currentTrack, duration, updateProgressFromPointer]);
+
+  const handleProgressPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!progressRef.current || duration === 0) return;
-    
     const rect = progressRef.current.getBoundingClientRect();
     const hoverX = e.clientX - rect.left;
     const percent = Math.max(0, Math.min(100, (hoverX / rect.width) * 100));
     setHoverProgress(percent);
-  }, [duration]);
+    if (isDraggingProgress.current) {
+      updateProgressFromPointer(e);
+    }
+  }, [duration, updateProgressFromPointer]);
 
-  const handleProgressMouseLeave = useCallback(() => {
-    setHoverProgress(0);
+  const handleProgressPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDraggingProgress.current) {
+      isDraggingProgress.current = false;
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {}
+    }
   }, []);
 
-  const handleVolumeClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  const updateVolumeFromPointer = useCallback((e: React.PointerEvent | PointerEvent) => {
     if (!volumeRef.current) return;
-    
     const rect = volumeRef.current.getBoundingClientRect();
-    const percent = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    const clickX = e.clientX - rect.left;
+    const percent = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
     changeVolume(percent);
-    
-    setVolumeChangeIndicator(true);
-    setTimeout(() => setVolumeChangeIndicator(false), 1000);
   }, [changeVolume]);
 
-  const handleVolumeMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!volumeRef.current) return;
-    
-    const rect = volumeRef.current.getBoundingClientRect();
-    const percent = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
-    setHoverVolume(percent);
+  const handleVolumePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    isDraggingVolume.current = true;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    updateVolumeFromPointer(e);
+    setVolumeChangeIndicator(true);
+  }, [updateVolumeFromPointer]);
+
+  const handleVolumePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDraggingVolume.current) {
+      updateVolumeFromPointer(e);
+    } else if (volumeRef.current) {
+      const rect = volumeRef.current.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const percent = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
+      setHoverVolume(percent);
+    }
+  }, [updateVolumeFromPointer]);
+
+  const handleVolumePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (isDraggingVolume.current) {
+      isDraggingVolume.current = false;
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {}
+      setTimeout(() => setVolumeChangeIndicator(false), 800);
+    }
   }, []);
 
   const handleToggleFavorite = () => {
@@ -185,13 +222,9 @@ export function PlayerControls() {
           <div className="title-2">{currentTrack.artist_name}</div>
         </div>
 
-        {isPlaying && (
-          <div className="playing">
-            <div className="greenline line-1"></div>
-            <div className="greenline line-2"></div>
-            <div className="greenline line-3"></div>
-            <div className="greenline line-4"></div>
-            <div className="greenline line-5"></div>
+        {currentTrack && (
+          <div className="player-visualizer-container" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+            <AudioVisualizer isPlaying={isPlaying} size="small" barCount={5} color="#1db954" />
           </div>
         )}
       </div>
@@ -200,9 +233,10 @@ export function PlayerControls() {
         <div 
           className="progress-bar-container"
           ref={progressRef}
-          onClick={handleProgressClick}
-          onMouseMove={handleProgressMouseMove}
-          onMouseLeave={handleProgressMouseLeave}
+          onPointerDown={handleProgressPointerDown}
+          onPointerMove={handleProgressPointerMove}
+          onPointerUp={handleProgressPointerUp}
+          onMouseLeave={() => setHoverProgress(0)}
         >
           <div className="progress-bar-track">
             <div 
@@ -275,19 +309,21 @@ export function PlayerControls() {
         <button
           className="control-btn volume_button"
           onClick={mute}
-          onMouseEnter={() => setShowVolume(true)}
-          onMouseLeave={() => setShowVolume(false)}
+          onMouseEnter={handleVolumeMouseEnter}
+          onMouseLeave={handleVolumeMouseLeave}
           title={isMuted ? 'Unmute' : 'Mute'}
+          aria-label={isMuted ? 'Unmute audio' : 'Mute audio'}
         >
           {getVolumeIcon()}
         </button>
 
         <button
-          className="control-btn"
+          className="control-btn close-btn"
           onClick={handleClosePlayer}
           title="Close player"
+          aria-label="Close music player"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"/>
             <line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
@@ -295,14 +331,32 @@ export function PlayerControls() {
 
         <div 
           className={`volume ${showVolume ? 'show' : ''} ${volumeChangeIndicator ? 'volume-changing' : ''}`}
-          onMouseEnter={() => setShowVolume(true)}
-          onMouseLeave={() => setShowVolume(false)}
+          onMouseEnter={handleVolumeMouseEnter}
+          onMouseLeave={handleVolumeMouseLeave}
         >
+          <div className="volume-header">
+            <span className="volume-label">Volume</span>
+            <span className="volume-text">{Math.round(volumePercent)}%</span>
+          </div>
           <div 
             className="slider volume-slider"
             ref={volumeRef}
-            onClick={handleVolumeClick}
-            onMouseMove={handleVolumeMouseMove}
+            onPointerDown={handleVolumePointerDown}
+            onPointerMove={handleVolumePointerMove}
+            onPointerUp={handleVolumePointerUp}
+            role="slider"
+            aria-label="Volume slider"
+            aria-valuenow={Math.round(volumePercent)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+                changeVolume(Math.min(100, volume + 5));
+              } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+                changeVolume(Math.max(0, volume - 5));
+              }
+            }}
           >
             <div className="volume-track">
               <div 
@@ -318,14 +372,6 @@ export function PlayerControls() {
                 style={{ left: `${volumePercent}%` }}
               />
             </div>
-          </div>
-          <div className="volume-indicator">
-            <span className="volume-text">{Math.round(volumePercent)}%</span>
-            {volumeChangeIndicator && (
-              <div className="volume-change-animation">
-                <div className="volume-pulse"></div>
-              </div>
-            )}
           </div>
         </div>
       </div>

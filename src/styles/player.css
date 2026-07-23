@@ -292,30 +292,24 @@
 }
 
 .play-button-modern:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(29, 185, 84, 0.6);
+  transform: scale(1.08);
+  box-shadow: 0 4px 16px rgba(29, 185, 84, 0.3);
 }
 
-.sound-waves {
+.track-visualizer-overlay {
   position: absolute;
   bottom: 4px;
   right: 4px;
   display: flex;
-  align-items: end;
-  gap: 2px;
-  height: 16px;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.75);
+  padding: 3px 5px;
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(29, 185, 84, 0.3);
+  z-index: 5;
 }
-
-.wave {
-  width: 2px;
-  background: #1db954;
-  border-radius: 1px;
-}
-
-.wave-1 { animation-delay: 0s; }
-.wave-2 { animation-delay: 0.1s; }
-.wave-3 { animation-delay: 0.2s; }
-.wave-4 { animation-delay: 0.3s; }
 
 .track-album-modern {
   font-size: 0.7rem;
@@ -547,59 +541,104 @@
 }
 
 .play-btn {
-  background: linear-gradient(135deg, #1db954, #1ed760);
-  color: #000;
-  border: 2px solid #1ed760;
-  transform: scale(1.1);
+  background: #1db954;
+  color: #000000;
+  border: none;
+  transform: scale(1.05);
   width: 42px;
   height: 42px;
-  box-shadow: 0 6px 20px rgba(29, 185, 84, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .play-btn:hover {
-  background: linear-gradient(135deg, #1ed760, #22e361);
-  color: #000;
-  transform: scale(1.15);
-  box-shadow: 0 8px 30px rgba(29, 185, 84, 0.6);
+  background: #1ed760;
+  color: #000000;
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(29, 185, 84, 0.3);
 }
 
 .volume {
   opacity: 0;
   position: absolute;
-  bottom: 40px;
-  right: 20px;
-  transition: all 0.3s ease;
-  background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(21, 21, 21, 0.9));
-  padding: 12px;
-  border-radius: 12px;
-  backdrop-filter: blur(20px);
-  min-width: 140px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  bottom: 50px;
+  right: 15px;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  background: linear-gradient(145deg, rgba(24, 24, 24, 0.98), rgba(12, 12, 12, 0.98));
+  padding: 12px 14px;
+  border-radius: 14px;
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(29, 185, 84, 0.15);
+  pointer-events: none;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 170px;
+}
+
+.volume::after {
+  content: '';
+  position: absolute;
+  bottom: -22px;
+  left: -15px;
+  right: -15px;
+  height: 25px;
+  background: transparent;
+  pointer-events: auto;
 }
 
 .volume.show {
   opacity: 1;
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  pointer-events: auto;
+}
+
+.volume-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.volume-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #b3b3b3;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .volume-slider {
-  height: 6px;
-  background-color: rgba(94, 94, 94, 0.6);
+  height: 8px;
   width: 100%;
-  border-radius: 3px;
+  background-color: rgba(94, 94, 94, 0.6);
+  border-radius: 4px;
   cursor: pointer;
   position: relative;
-  margin-bottom: 10px;
+  touch-action: none;
 }
 
 .volume-fill {
   background: linear-gradient(90deg, #1db954 0%, #1ed760 100%);
   height: 100%;
-  border-radius: 3px;
-  transition: width 0.1s ease;
-  position: relative;
+  border-radius: 4px;
+  position: absolute;
+  top: 0;
+  left: 0;
   z-index: 2;
+}
+
+.volume-horizontal .volume-fill {
+  height: 100%;
+  top: 0;
+}
+
+.volume-vertical .volume-fill {
+  width: 100%;
+  bottom: 0;
+  left: 0;
 }
 
 .playing {
@@ -753,11 +792,27 @@
 }
 
 @media (max-width: 768px) {
+  .spotify-player-card,
+  .volume,
+  .play-overlay-modern,
+  .playlist-actions-menu,
+  .controls,
+  .progress-tooltip {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
   .spotify-player-card {
+    background: #121212 !important;
     height: 90px;
     padding: 8px 15px;
   }
-  
+
+  .volume {
+    background: #181818 !important;
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
   .controls {
     gap: 6px;
     bottom: 10px;
@@ -765,14 +820,16 @@
   
   .control-btn {
     padding: 6px;
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
   }
   
   .play-btn {
     transform: scale(1.05);
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
   }
   
   .track-item-modern {

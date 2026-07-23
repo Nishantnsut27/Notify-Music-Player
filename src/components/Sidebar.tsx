@@ -1,10 +1,19 @@
 import React, { useState } from 'react';
 import { usePlayerStore } from '../store/playerStore';
+import { ConfirmModal } from './ConfirmModal';
+import { PlaylistMenu } from './PlaylistMenu';
+import type { Playlist } from '../types/types';
 
 export function Sidebar() {
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [showImportExport, setShowImportExport] = useState<string | null>(null);
+  
+  // Custom modal states
+  const [playlistToDelete, setPlaylistToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [playlistToRename, setPlaylistToRename] = useState<{ id: string; name: string } | null>(null);
+  const [renameInput, setRenameInput] = useState('');
+  const [noticeModal, setNoticeModal] = useState<{ title: string; message: string } | null>(null);
 
   const {
     currentView,
@@ -50,9 +59,15 @@ export function Sidebar() {
         if (typeof result === 'string') {
           try {
             importPlaylist(result);
-            alert('Playlist imported successfully!');
+            setNoticeModal({
+              title: 'Playlist Imported',
+              message: 'Your playlist has been successfully imported into Notify Music Player.'
+            });
           } catch {
-            alert('Failed to import playlist. Please check the file format.');
+            setNoticeModal({
+              title: 'Import Failed',
+              message: 'Failed to import playlist. Please check that the file format is valid JSON.'
+            });
           }
         }
       };
@@ -62,15 +77,23 @@ export function Sidebar() {
     setShowImportExport(null);
   };
 
-  const handleDeletePlaylist = (id: string, name: string) => {
-    if (confirm(`Are you sure you want to delete "${name}"?`)) {
-      deletePlaylist(id);
+  const confirmDeletePlaylist = () => {
+    if (playlistToDelete) {
+      deletePlaylist(playlistToDelete.id);
+      setPlaylistToDelete(null);
+    }
+  };
+
+  const confirmRenamePlaylist = () => {
+    if (playlistToRename && renameInput.trim()) {
+      renamePlaylist(playlistToRename.id, renameInput.trim());
+      setPlaylistToRename(null);
+      setRenameInput('');
     }
   };
 
   return (
     <>
-      {}
       {isSidebarOpen && (
         <div className="sidebar-overlay" onClick={toggleSidebar} />
       )}
@@ -87,16 +110,6 @@ export function Sidebar() {
             />
             <h2 className="sidebar-title" style={{ color: '#ffffff !important' }}>Notify Music Player</h2>
           </div>
-          <button
-            onClick={toggleSidebar}
-            className="btn btn-ghost btn-icon sidebar-toggle"
-            aria-label="Toggle sidebar"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 6L6 18"/>
-              <path d="M6 6l12 12"/>
-            </svg>
-          </button>
         </div>
 
         <nav className="sidebar-nav">
@@ -197,9 +210,12 @@ export function Sidebar() {
                       )}
                     </button>
                     
-                    <div className="sidebar-playlist-actions">
+                    <div className="sidebar-playlist-actions" style={{ position: 'relative' }}>
                       <button
-                        onClick={() => setShowImportExport(showImportExport === playlist.id ? null : playlist.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowImportExport(showImportExport === playlist.id ? null : playlist.id);
+                        }}
                         className="btn btn-ghost btn-icon btn-sm"
                         aria-label="More options"
                       >
@@ -210,34 +226,17 @@ export function Sidebar() {
                         </svg>
                       </button>
 
-                      {showImportExport === playlist.id && (
-                        <div className="sidebar-dropdown">
-                          <button
-                            onClick={() => {
-                              const newName = prompt('Enter new name:', playlist.name);
-                              if (newName && newName.trim() !== playlist.name) {
-                                renamePlaylist(playlist.id, newName.trim());
-                              }
-                              setShowImportExport(null);
-                            }}
-                            className="sidebar-dropdown-item"
-                          >
-                            Rename
-                          </button>
-                          <button
-                            onClick={() => handleExportPlaylist(playlist.id)}
-                            className="sidebar-dropdown-item"
-                          >
-                            Export
-                          </button>
-                          <button
-                            onClick={() => handleDeletePlaylist(playlist.id, playlist.name)}
-                            className="sidebar-dropdown-item sidebar-dropdown-item-danger"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
+                      <PlaylistMenu
+                        playlist={playlist}
+                        isOpen={showImportExport === playlist.id}
+                        onClose={() => setShowImportExport(null)}
+                        onRename={(p: Playlist) => {
+                          setPlaylistToRename(p);
+                          setRenameInput(p.name);
+                        }}
+                        onExport={(id: string) => handleExportPlaylist(id)}
+                        onDelete={(p: Playlist) => setPlaylistToDelete(p)}
+                      />
                     </div>
                   </li>
                 ))}
@@ -275,6 +274,55 @@ export function Sidebar() {
           </p>
         </div>
       </aside>
+
+      {/* Delete Playlist Confirmation */}
+      {playlistToDelete && (
+        <ConfirmModal
+          isOpen={!!playlistToDelete}
+          title="Delete Playlist"
+          message={`Are you sure you want to delete "${playlistToDelete.name}"? This action cannot be undone.`}
+          confirmText="Delete Playlist"
+          cancelText="Cancel"
+          variant="danger"
+          onConfirm={confirmDeletePlaylist}
+          onCancel={() => setPlaylistToDelete(null)}
+        />
+      )}
+
+      {/* Rename Playlist Modal */}
+      {playlistToRename && (
+        <ConfirmModal
+          isOpen={!!playlistToRename}
+          title="Rename Playlist"
+          message="Enter a new name for your playlist:"
+          confirmText="Save Name"
+          cancelText="Cancel"
+          variant="primary"
+          showInput={true}
+          inputValue={renameInput}
+          inputPlaceholder="Playlist name"
+          onInputChange={setRenameInput}
+          onConfirm={confirmRenamePlaylist}
+          onCancel={() => {
+            setPlaylistToRename(null);
+            setRenameInput('');
+          }}
+        />
+      )}
+
+      {/* Notice / Alert Modal */}
+      {noticeModal && (
+        <ConfirmModal
+          isOpen={!!noticeModal}
+          title={noticeModal.title}
+          message={noticeModal.message}
+          confirmText="OK"
+          cancelText="Close"
+          variant="primary"
+          onConfirm={() => setNoticeModal(null)}
+          onCancel={() => setNoticeModal(null)}
+        />
+      )}
     </>
   );
 }

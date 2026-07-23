@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import type { Track } from '../types/types';
 import { usePlayerStore } from '../store/playerStore';
 import { formatDuration, getArtistUrl } from '../services/musicApi';
+import { ConfirmModal } from './ConfirmModal';
+import { AudioVisualizer } from './AudioVisualizer';
 
 interface TrackListProps {
   tracks: Track[];
@@ -26,10 +28,13 @@ export function TrackListModern({
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [addingToPlaylist, setAddingToPlaylist] = useState<string | null>(null);
   const [removingFromPlaylist, setRemovingFromPlaylist] = useState<string | null>(null);
+  const [trackToRemove, setTrackToRemove] = useState<Track | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   
   const { 
     playTrack, 
+    pauseTrack,
+    setIsPlaying,
     currentTrack, 
     isPlaying,
     playlists,
@@ -41,6 +46,17 @@ export function TrackListModern({
     favorites
   } = usePlayerStore();
 
+  const handlePlayTrack = (track: Track, index: number) => {
+    if (currentTrack?.id === track.id) {
+      if (isPlaying) {
+        pauseTrack();
+      } else {
+        setIsPlaying(true);
+      }
+    } else {
+      playTrack(track, tracks, index);
+    }
+  };
   
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -55,10 +71,6 @@ export function TrackListModern({
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [showPlaylistMenu]);
-
-  const handlePlayTrack = (track: Track, index: number) => {
-    playTrack(track, tracks, index);
-  };
 
   const handleAddToPlaylist = async (playlistId: string, track: Track) => {
     setAddingToPlaylist(playlistId);
@@ -79,20 +91,21 @@ export function TrackListModern({
     }
   };
 
-  const handleRemoveFromPlaylist = async (track: Track) => {
+  const handleRemoveFromPlaylist = (track: Track) => {
     if (playlistId) {
-      const playlist = playlists.find(p => p.id === playlistId);
-      const confirmMessage = `Remove "${track.name}" from "${playlist?.name}" playlist?`;
-      
-      if (window.confirm(confirmMessage)) {
-        setRemovingFromPlaylist(track.id);
-        removeTrackFromPlaylist(playlistId, track.id);
-        
-       
-        setTimeout(() => {
-          setRemovingFromPlaylist(null);
-        }, 300);
-      }
+      setTrackToRemove(track);
+    }
+  };
+
+  const confirmRemoveTrack = () => {
+    if (trackToRemove && playlistId) {
+      const trackId = trackToRemove.id;
+      setRemovingFromPlaylist(trackId);
+      removeTrackFromPlaylist(playlistId, trackId);
+      setTrackToRemove(null);
+      setTimeout(() => {
+        setRemovingFromPlaylist(null);
+      }, 300);
     }
   };
 
@@ -180,6 +193,16 @@ export function TrackListModern({
           <div 
             key={track.id} 
             className={`track-item-modern ${isCurrentTrack(track) ? 'active' : ''} ${hoveredTrack === track.id ? 'hovered' : ''} ${hoveredTrack && hoveredTrack !== track.id ? 'blurred' : ''} ${removingFromPlaylist === track.id ? 'removing' : ''}`}
+            onClick={() => handlePlayTrack(track, index)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handlePlayTrack(track, index);
+              }
+            }}
+            role="button"
+            tabIndex={0}
+            aria-label={`Play ${track.name} by ${track.artist_name}`}
             onMouseEnter={() => setHoveredTrack(track.id)}
             style={{
               opacity: removingFromPlaylist === track.id ? 0.5 : 1,
@@ -199,7 +222,10 @@ export function TrackListModern({
               />
               <div className="play-overlay-modern">
                 <button
-                  onClick={() => handlePlayTrack(track, index)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePlayTrack(track, index);
+                  }}
                   className="play-button-modern"
                   aria-label={isCurrentTrack(track) && isPlaying ? 'Currently playing' : 'Play track'}
                 >
@@ -216,12 +242,9 @@ export function TrackListModern({
                 </button>
               </div>
               
-              {isCurrentTrack(track) && isPlaying && (
-                <div className="sound-waves">
-                  <div className="wave wave-1"></div>
-                  <div className="wave wave-2"></div>
-                  <div className="wave wave-3"></div>
-                  <div className="wave wave-4"></div>
+              {isCurrentTrack(track) && (
+                <div className="track-visualizer-overlay">
+                  <AudioVisualizer isPlaying={isPlaying} size="small" barCount={4} />
                 </div>
               )}
             </div>
@@ -234,6 +257,7 @@ export function TrackListModern({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="artist-link-modern"
+                  onClick={(e) => e.stopPropagation()}
                 >
                   {track.artist_name}
                 </a>
@@ -253,7 +277,10 @@ export function TrackListModern({
 
             <div className="track-actions-modern">
               <button
-                onClick={() => handleToggleFavorite(track)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleFavorite(track);
+                }}
                 className={`icon-button ${isFavorite(track) ? 'active' : ''}`}
                 aria-label={isFavorite(track) ? 'Remove from favorites' : 'Add to favorites'}
                 style={{
@@ -279,7 +306,10 @@ export function TrackListModern({
 
               {playlistId && (
                 <button
-                  onClick={() => handleRemoveFromPlaylist(track)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveFromPlaylist(track);
+                  }}
                   className="icon-button remove-button"
                   aria-label="Remove from playlist"
                   disabled={removingFromPlaylist === track.id}
@@ -348,7 +378,10 @@ export function TrackListModern({
               {showAddToPlaylist && (
                 <div className="playlist-menu-container-modern">
                   <button
-                    onClick={() => setShowPlaylistMenu(showPlaylistMenu === track.id ? null : track.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowPlaylistMenu(showPlaylistMenu === track.id ? null : track.id);
+                    }}
                     className="icon-button"
                     aria-label="Add to playlist"
                     style={{
@@ -1049,6 +1082,19 @@ export function TrackListModern({
             </div>
           </div>
         </div>
+      )}
+
+      {trackToRemove && (
+        <ConfirmModal
+          isOpen={!!trackToRemove}
+          title="Remove Track"
+          message={`Are you sure you want to remove "${trackToRemove.name}" from this playlist?`}
+          confirmText="Remove"
+          cancelText="Cancel"
+          variant="danger"
+          onConfirm={confirmRemoveTrack}
+          onCancel={() => setTrackToRemove(null)}
+        />
       )}
     </div>
   );
