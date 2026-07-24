@@ -160,10 +160,10 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (window.innerWidth <= 768 && isSidebarOpen) {
+    if (window.innerWidth <= 768) {
       usePlayerStore.getState().closeSidebar();
     }
-  }, [currentView, isSidebarOpen]);
+  }, [currentView]);
 
   const renderMainContent = () => {
     switch (currentView) {

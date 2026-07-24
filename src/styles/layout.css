@@ -579,6 +579,8 @@
 
   .sidebar {
     background: #121212 !important;
+    width: 280px;
+    z-index: 901;
   }
 
   .playlist-card {
@@ -586,11 +588,7 @@
   }
 
   .sidebar-overlay {
-    display: block;
-  }
-  
-  .sidebar {
-    width: 280px;
+    z-index: 900;
   }
   
   .sidebar-toggle {
@@ -599,10 +597,15 @@
   
   .mobile-menu-toggle {
     display: flex;
+    position: relative;
+    z-index: 101;
+    pointer-events: auto;
+    cursor: pointer;
   }
   
   .app-header {
     padding: 0.75rem 1rem;
+    z-index: 100;
   }
   
   .app-title {
