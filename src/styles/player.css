@@ -213,46 +213,48 @@
   max-width: 400px;
 }
 
-.track-list-container-modern.has-hovered-track .track-item-modern {
-  opacity: 0.3;
-  filter: blur(2px);
-  transform: scale(0.98);
-  transition: all 0.4s var(--smooth);
-}
+@media (hover: hover) {
+  .track-list-container-modern.has-hovered-track .track-item-modern {
+    opacity: 0.3;
+    filter: blur(2px);
+    transform: scale(0.98);
+    transition: all 0.4s var(--smooth);
+  }
 
-.track-list-container-modern.has-hovered-track .track-item-modern .track-title-modern,
-.track-list-container-modern.has-hovered-track .track-item-modern .track-artist-modern {
-  color: #555555;
-}
+  .track-list-container-modern.has-hovered-track .track-item-modern .track-title-modern,
+  .track-list-container-modern.has-hovered-track .track-item-modern .track-artist-modern {
+    color: #555555;
+  }
 
-.track-list-container-modern.has-hovered-track .track-item-modern.hovered {
-  opacity: 1;
-  filter: none;
-  transform: translateX(15px) translateY(-3px) scale(1.03);
-  z-index: 20;
-  border-color: rgba(29, 185, 84, 0.6);
-  box-shadow: 
-    0 12px 40px rgba(29, 185, 84, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-}
+  .track-list-container-modern.has-hovered-track .track-item-modern.hovered {
+    opacity: 1;
+    filter: none;
+    transform: translateX(15px) translateY(-3px) scale(1.03);
+    z-index: 20;
+    border-color: rgba(29, 185, 84, 0.6);
+    box-shadow: 
+      0 12px 40px rgba(29, 185, 84, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
 
-.track-list-container-modern.has-hovered-track .track-item-modern.hovered .track-title-modern,
-.track-list-container-modern.has-hovered-track .track-item-modern.hovered .track-artist-modern {
-  color: #ffffff;
-}
+  .track-list-container-modern.has-hovered-track .track-item-modern.hovered .track-title-modern,
+  .track-list-container-modern.has-hovered-track .track-item-modern.hovered .track-artist-modern {
+    color: #ffffff;
+  }
 
-.track-item-modern.hovered .track-artwork-modern {
-  transform: scale(1.08);
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
-}
+  .track-item-modern.hovered .track-artwork-modern {
+    transform: scale(1.08);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
+  }
 
-.track-item-modern.hovered .track-artwork-modern img {
-  transform: scale(1.12);
-}
+  .track-item-modern.hovered .track-artwork-modern img {
+    transform: scale(1.12);
+  }
 
-.track-item-modern.hovered .track-title-modern {
-  color: #1ed760;
-  text-shadow: 0 0 10px rgba(29, 185, 84, 0.5);
+  .track-item-modern.hovered .track-title-modern {
+    color: #1ed760;
+    text-shadow: 0 0 10px rgba(29, 185, 84, 0.5);
+  }
 }
 
 .play-overlay-modern {

@@ -95,7 +95,10 @@ export function PlayerControls() {
       isDraggingProgress.current = false;
       try {
         e.currentTarget.releasePointerCapture(e.pointerId);
-      } catch {}
+      } catch (err) {
+        // Pointer capture may have already been released automatically by browser
+        void err;
+      }
     }
   }, []);
 
@@ -131,7 +134,10 @@ export function PlayerControls() {
       isDraggingVolume.current = false;
       try {
         e.currentTarget.releasePointerCapture(e.pointerId);
-      } catch {}
+      } catch (err) {
+        // Pointer capture may have already been released automatically by browser
+        void err;
+      }
       setTimeout(() => setVolumeChangeIndicator(false), 800);
     }
   }, []);

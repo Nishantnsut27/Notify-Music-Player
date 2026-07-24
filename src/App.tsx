@@ -5,7 +5,11 @@ import { PlayerControls } from './components/PlayerControls';
 import { Sidebar } from './components/Sidebar';
 import { ConfirmModal } from './components/ConfirmModal';
 import { PlaylistMenu } from './components/PlaylistMenu';
+import { ToastContainer } from './components/ToastContainer';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { EmptyFavorites, EmptyPlaylists } from './components/EmptyState';
 import { usePlayerStore } from './store/playerStore';
+import { useToastStore } from './store/toastStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { usePlayer } from './hooks/usePlayer';
 import { MusicAPI } from './services/musicApi';
@@ -91,6 +95,11 @@ function App() {
 
   const confirmClearFavorites = () => {
     clearFavorites();
+    useToastStore.getState().addToast({
+      type: 'info',
+      title: 'Favorites Cleared',
+      message: 'Removed all tracks from your favorites.',
+    });
     setShowClearFavoritesModal(false);
   };
 
@@ -169,17 +178,12 @@ function App() {
     switch (currentView) {
       case 'search':
         return (
-          <div style={{
-            maxWidth: '100%',
-            width: '100%',
-            margin: '0',
-            padding: '0',
-            position: 'relative',
-            zIndex: 2,
-          }}>
-            <SearchBar />
+          <div className="view-container">
+            <div className="content-search-container">
+              <SearchBar />
+            </div>
             {results.length > 0 ? (
-              <div style={{ marginTop: '0' }}>
+              <div>
                 <TrackListModern
                   tracks={results}
                   title="Search Results"
@@ -188,7 +192,7 @@ function App() {
                 />
               </div>
             ) : (
-              <div style={{ marginTop: '0' }}>
+              <div>
                 <TrackListModern
                   tracks={trending}
                   title="Trending Songs"
@@ -202,14 +206,7 @@ function App() {
 
       case 'favorites':
         return (
-          <div style={{
-            maxWidth: '100%',
-            width: '100%',
-            margin: '0',
-            padding: '0',
-            position: 'relative',
-            zIndex: 2,
-          }}>
+          <div className="view-container">
             <div className="page-header">
               <div className="page-header-content">
                 <div>
@@ -231,13 +228,11 @@ function App() {
             </div>
 
             {favorites.length === 0 ? (
-              <div className="empty-state">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                </svg>
-                <h3>No favorites yet</h3>
-                <p>Heart tracks to add them to your favorites</p>
-              </div>
+              <EmptyFavorites
+                onBrowse={() => {
+                  usePlayerStore.getState().setCurrentView('search');
+                }}
+              />
             ) : (
               <TrackListModern
                 tracks={favorites}
@@ -249,14 +244,7 @@ function App() {
 
       case 'playlists':
         return (
-          <div style={{
-            maxWidth: '100%',
-            width: '100%',
-            margin: '0',
-            padding: '0',
-            position: 'relative',
-            zIndex: 2,
-          }}>
+          <div className="view-container">
             <div className="page-header">
               <h1 className="page-title">Your Playlists</h1>
               <p className="page-subtitle">
@@ -265,16 +253,7 @@ function App() {
             </div>
 
             {playlists.length === 0 ? (
-              <div className="empty-state">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  <line x1="9" y1="9" x2="15" y2="9" />
-                  <line x1="9" y1="13" x2="15" y2="13" />
-                  <line x1="9" y1="17" x2="13" y2="17" />
-                </svg>
-                <h3>No playlists yet</h3>
-                <p>Create your first playlist to organize your music</p>
-              </div>
+              <EmptyPlaylists />
             ) : (
               <div className="playlists-grid">
                 {playlists.map((playlist) => (
@@ -391,6 +370,10 @@ function App() {
 
           <h1 className="app-title" style={{ color: '#ffffff !important' }}>Notify Music Player</h1>
 
+          <div className="header-search-container">
+            <SearchBar />
+          </div>
+
           <div className="header-actions">
             <a
               href="https://github.com/Nishantnsut27"
@@ -439,8 +422,16 @@ function App() {
           onCancel={() => setShowClearFavoritesModal(false)}
         />
       )}
+
+      <ToastContainer />
     </div>
   );
 }
 
-export default App;
+export default function RootApp() {
+  return (
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  );
+}

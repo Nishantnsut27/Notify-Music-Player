@@ -56,6 +56,41 @@
   }
 }
 
+.header-search-container {
+  display: none;
+}
+
+.content-search-container {
+  display: flex;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 769px) {
+  .header-search-container {
+    display: flex !important;
+    flex: 1;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .header-search-container .search-bar-form {
+    padding: 0 !important;
+    margin: 0 !important;
+    position: relative !important;
+    top: 0 !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .content-search-container {
+    display: none !important;
+  }
+}
+
 .app-content {
   flex: 1;
   overflow-y: auto;
@@ -69,6 +104,22 @@
   position: relative;
   width: 100%;
   box-sizing: border-box;
+}
+
+.view-container {
+  max-width: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 1.25rem 1.25rem 2rem 1.25rem;
+  position: relative;
+  z-index: 2;
+  box-sizing: border-box;
+}
+
+@media (min-width: 769px) {
+  .view-container {
+    padding: 2rem 2.5rem 3rem 2.5rem;
+  }
 }
 
 .spotify-gradient-overlay {
@@ -831,5 +882,45 @@
     right: 0;
     min-width: 100px;
     max-width: calc(100vw - 2rem);
+  }
+}
+
+@media (max-height: 550px) and (orientation: landscape) {
+  :root {
+    --player-height: 70px;
+  }
+
+  .app-main {
+    padding-bottom: 70px;
+  }
+
+  .sidebar {
+    height: calc(100vh - 70px);
+  }
+
+  .sidebar-header {
+    padding: 0.4rem 0.75rem;
+    margin: 0.25rem 0;
+  }
+
+  .sidebar-nav {
+    padding: 0.25rem 0.5rem;
+  }
+
+  .sidebar-nav-item {
+    padding: 0.4rem 0.75rem;
+  }
+
+  .sidebar-section {
+    padding: 0.4rem 0.75rem;
+  }
+
+  .page-header {
+    margin-bottom: 0.75rem;
+    padding-top: 0.75rem;
+  }
+
+  .search-bar-form {
+    padding: 0.75rem 1rem;
   }
 }

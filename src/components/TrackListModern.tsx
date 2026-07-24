@@ -1,9 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Track } from '../types/types';
 import { usePlayerStore } from '../store/playerStore';
+import { useToastStore } from '../store/toastStore';
 import { formatDuration, getArtistUrl } from '../services/musicApi';
 import { ConfirmModal } from './ConfirmModal';
 import { AudioVisualizer } from './AudioVisualizer';
+import { SkeletonTrackList } from './Skeletons';
+import { EmptySearchResults, EmptyState } from './EmptyState';
+import { ErrorDisplay } from './ErrorDisplay';
 
 interface TrackListProps {
   tracks: Track[];
@@ -30,6 +34,7 @@ export function TrackListModern({
   const [removingFromPlaylist, setRemovingFromPlaylist] = useState<string | null>(null);
   const [trackToRemove, setTrackToRemove] = useState<Track | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const addToast = useToastStore(state => state.addToast);
   
   const { 
     playTrack, 
@@ -57,25 +62,44 @@ export function TrackListModern({
       playTrack(track, tracks, index);
     }
   };
-  
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setShowPlaylistMenu(null);
         setShowCreatePlaylist(false);
+        setNewPlaylistName('');
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowPlaylistMenu(null);
+        setShowCreatePlaylist(false);
+        setNewPlaylistName('');
       }
     };
 
     if (showPlaylistMenu) {
       document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        window.removeEventListener('keydown', handleKeyDown);
+      };
     }
   }, [showPlaylistMenu]);
 
-  const handleAddToPlaylist = async (playlistId: string, track: Track) => {
-    setAddingToPlaylist(playlistId);
-    addTrackToPlaylist(playlistId, track);
-    
+  const handleAddToPlaylist = async (pId: string, track: Track) => {
+    setAddingToPlaylist(pId);
+    addTrackToPlaylist(pId, track);
+    const targetPlaylist = playlists.find(p => p.id === pId);
+
+    addToast({
+      type: 'success',
+      title: 'Added to Playlist',
+      message: `"${track.name}" added to ${targetPlaylist?.name || 'playlist'}`,
+    });
     
     setTimeout(() => {
       setAddingToPlaylist(null);
@@ -86,6 +110,11 @@ export function TrackListModern({
   const handleCreatePlaylist = () => {
     if (newPlaylistName.trim()) {
       createPlaylist(newPlaylistName.trim());
+      addToast({
+        type: 'success',
+        title: 'Playlist Created',
+        message: `Created "${newPlaylistName.trim()}"`,
+      });
       setNewPlaylistName('');
       setShowCreatePlaylist(false);
     }
@@ -100,8 +129,14 @@ export function TrackListModern({
   const confirmRemoveTrack = () => {
     if (trackToRemove && playlistId) {
       const trackId = trackToRemove.id;
+      const trackName = trackToRemove.name;
       setRemovingFromPlaylist(trackId);
       removeTrackFromPlaylist(playlistId, trackId);
+      addToast({
+        type: 'info',
+        title: 'Removed from Playlist',
+        message: `"${trackName}" removed`,
+      });
       setTrackToRemove(null);
       setTimeout(() => {
         setRemovingFromPlaylist(null);
@@ -109,17 +144,27 @@ export function TrackListModern({
     }
   };
 
-  const isTrackInPlaylist = (track: Track, playlistId: string) => {
-    const playlist = playlists.find(p => p.id === playlistId);
+  const isTrackInPlaylist = (track: Track, pId: string) => {
+    const playlist = playlists.find(p => p.id === pId);
     return playlist?.tracks.some(t => t.id === track.id) || false;
   };
 
   const handleToggleFavorite = (track: Track) => {
-    const isFavorite = favorites.some(f => f.id === track.id);
-    if (isFavorite) {
+    const isFav = favorites.some(f => f.id === track.id);
+    if (isFav) {
       removeFromFavorites(track.id);
+      addToast({
+        type: 'info',
+        title: 'Removed from Favorites',
+        message: `"${track.name}" removed from favorites`,
+      });
     } else {
       addToFavorites(track);
+      addToast({
+        type: 'success',
+        title: 'Added to Favorites',
+        message: `"${track.name}" saved to favorites`,
+      });
     }
   };
 
@@ -128,51 +173,52 @@ export function TrackListModern({
 
   if (isLoading) {
     return (
-      <div className="modern-loading">
-        <div className="loading-spinner"></div>
-        <p className="loading-text">Loading tracks...</p>
+      <div className="modern-track-list">
+        {title && <h2 className="track-list-title-modern">{title}</h2>}
+        <SkeletonTrackList count={8} />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="modern-error">
-        <h3 className="error-title">🎵 Music Temporarily Unavailable</h3>
-        <p className="error-message">{error}</p>
-        <button 
-          className="modern-button"
-          onClick={() => window.location.reload()}
-        >
-          Try Again
-        </button>
-      </div>
+      <ErrorDisplay
+        title="Music Temporarily Unavailable"
+        message={error}
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 
   if (tracks.length === 0) {
+    const isSearching = usePlayerStore.getState().query.length > 0;
     return (
-      <div className="modern-empty">
-        <div className="empty-icon">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <circle cx="12" cy="12" r="3" />
-            <circle cx="12" cy="1" r="1" />
-            <circle cx="12" cy="23" r="1" />
-            <circle cx="20" cy="12" r="1" />
-            <circle cx="4" cy="12" r="1" />
-          </svg>
-        </div>
-        <h3 className="empty-title">No tracks found</h3>
-        <p className="empty-description">Try searching for something else or check out our trending tracks!</p>
-        <button 
-          className="modern-button"
-          onClick={() => {
-            const { setCurrentView } = usePlayerStore.getState();
-            setCurrentView('search');
-          }}
-        >
-          Browse Trending
-        </button>
+      <div className="modern-track-list">
+        {title && <h2 className="track-list-title-modern">{title}</h2>}
+        {isSearching ? (
+          <EmptySearchResults
+            onClear={() => {
+              const store = usePlayerStore.getState();
+              store.clearResults();
+            }}
+          />
+        ) : (
+          <EmptyState
+            icon={
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 1v3m0 16v3M1 12h3m16 0h3" />
+              </svg>
+            }
+            title="No songs available"
+            description="Explore our trending tracks or search for your favorite artists and genres."
+            actionText="Browse Trending"
+            onAction={() => {
+              const { setCurrentView } = usePlayerStore.getState();
+              setCurrentView('search');
+            }}
+          />
+        )}
       </div>
     );
   }

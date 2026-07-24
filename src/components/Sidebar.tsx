@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { usePlayerStore } from '../store/playerStore';
+import { useToastStore } from '../store/toastStore';
 import { ConfirmModal } from './ConfirmModal';
 import { PlaylistMenu } from './PlaylistMenu';
 import type { Playlist } from '../types/types';
@@ -8,6 +9,7 @@ export function Sidebar() {
   const [showCreatePlaylist, setShowCreatePlaylist] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [showImportExport, setShowImportExport] = useState<string | null>(null);
+  const addToast = useToastStore(state => state.addToast);
   
   // Custom modal states
   const [playlistToDelete, setPlaylistToDelete] = useState<{ id: string; name: string } | null>(null);
@@ -30,6 +32,16 @@ export function Sidebar() {
     closeSidebar
   } = usePlayerStore();
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isSidebarOpen && window.innerWidth <= 768) {
+        closeSidebar();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSidebarOpen, closeSidebar]);
+
   const handleNavClick = (view: 'search' | 'favorites' | 'playlists') => {
     setCurrentView(view);
     if (window.innerWidth <= 768) {
@@ -41,6 +53,11 @@ export function Sidebar() {
     e.preventDefault();
     if (newPlaylistName.trim()) {
       createPlaylist(newPlaylistName.trim());
+      addToast({
+        type: 'success',
+        title: 'Playlist Created',
+        message: `Created "${newPlaylistName.trim()}"`,
+      });
       setNewPlaylistName('');
       setShowCreatePlaylist(false);
     }
@@ -55,6 +72,11 @@ export function Sidebar() {
     a.download = `playlist-${id}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    addToast({
+      type: 'info',
+      title: 'Playlist Exported',
+      message: 'Downloaded playlist JSON file',
+    });
     setShowImportExport(null);
   };
 
@@ -65,9 +87,10 @@ export function Sidebar() {
       const isJsonMime = !file.type || file.type === 'application/json' || file.type === 'text/json';
 
       if (!isJsonExtension || !isJsonMime) {
-        setNoticeModal({
+        addToast({
+          type: 'error',
           title: 'Import Failed',
-          message: 'Failed to import playlist. Only .json playlist files are supported.'
+          message: 'Only .json playlist files are supported.',
         });
         e.target.value = '';
         setShowImportExport(null);
@@ -80,26 +103,20 @@ export function Sidebar() {
         if (typeof result === 'string') {
           try {
             importPlaylist(result);
-            setNoticeModal({
+            addToast({
+              type: 'success',
               title: 'Playlist Imported',
-              message: 'Your playlist has been successfully imported into Notify Music Player.'
+              message: 'Successfully imported playlist.',
             });
           } catch (err) {
-            const errorMsg = err instanceof Error ? err.message : 'Failed to import playlist. Please check that the file format is valid JSON.';
-            setNoticeModal({
+            const errorMsg = err instanceof Error ? err.message : 'Failed to import playlist.';
+            addToast({
+              type: 'error',
               title: 'Import Failed',
-              message: errorMsg.includes('already exists')
-                ? 'Playlist already exists.'
-                : errorMsg
+              message: errorMsg,
             });
           }
         }
-      };
-      reader.onerror = () => {
-        setNoticeModal({
-          title: 'Import Failed',
-          message: 'Failed to read file. Please check that the file is not corrupted.'
-        });
       };
       reader.readAsText(file);
     }
@@ -110,6 +127,11 @@ export function Sidebar() {
   const confirmDeletePlaylist = () => {
     if (playlistToDelete) {
       deletePlaylist(playlistToDelete.id);
+      addToast({
+        type: 'info',
+        title: 'Playlist Deleted',
+        message: `Deleted "${playlistToDelete.name}"`,
+      });
       setPlaylistToDelete(null);
     }
   };
@@ -117,6 +139,11 @@ export function Sidebar() {
   const confirmRenamePlaylist = () => {
     if (playlistToRename && renameInput.trim()) {
       renamePlaylist(playlistToRename.id, renameInput.trim());
+      addToast({
+        type: 'success',
+        title: 'Playlist Renamed',
+        message: `Renamed to "${renameInput.trim()}"`,
+      });
       setPlaylistToRename(null);
       setRenameInput('');
     }

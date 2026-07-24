@@ -6,8 +6,6 @@ import { MusicAPI } from '../services/musicApi';
 export function SearchBar() {
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
   const debouncedQuery = useDebounce(query, 500);
   const { 
     setResults, 
@@ -82,46 +80,8 @@ export function SearchBar() {
       onSubmit={handleSubmit} 
       className="search-bar-form"
     >
-      <div 
-        style={{
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          background: isHovered || isFocused 
-            ? 'linear-gradient(135deg, rgba(50, 50, 50, 0.8) 0%, rgba(30, 30, 30, 0.9) 100%)'
-            : 'linear-gradient(135deg, rgba(40, 40, 40, 0.6) 0%, rgba(24, 24, 24, 0.8) 100%)',
-          backdropFilter: 'blur(20px)',
-          borderRadius: '50px',
-          border: 'none',
-          outline: 'none',
-          boxShadow: 'none',
-          padding: '0.5rem',
-          transition: 'all 0.3s ease',
-          width: '100%',
-          maxWidth: '600px',
-          transform: isHovered || isFocused ? 'translateY(-2px)' : 'translateY(0)',
-        }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        <div 
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '44px',
-            height: '44px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #1db954 0%, #1ed760 100%)',
-            flexShrink: 0,
-            marginRight: '0.75rem',
-            boxShadow: isHovered || isFocused 
-              ? '0 6px 20px rgba(29, 185, 84, 0.6)' 
-              : '0 4px 15px rgba(29, 185, 84, 0.4)',
-            transition: 'all 0.3s ease',
-            transform: isHovered || isFocused ? 'scale(1.05)' : 'scale(1)',
-          }}
-        >
+      <div className="search-bar-container">
+        <div className="search-bar-icon-badge">
           {isSearching ? (
             <svg 
               width="20" 
@@ -130,7 +90,6 @@ export function SearchBar() {
               fill="none"
               stroke="white" 
               strokeWidth="2"
-              style={{ transition: 'all 0.3s ease' }}
             >
               <circle cx="12" cy="12" r="3">
                 <animate attributeName="r" values="3;6;3" dur="1.5s" repeatCount="indefinite"/>
@@ -148,10 +107,6 @@ export function SearchBar() {
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              style={{ 
-                transition: 'all 0.3s ease',
-                transform: isHovered || isFocused ? 'scale(1.1)' : 'scale(1)'
-              }}
             >
               <circle cx="11" cy="11" r="8"/>
               <path d="M21 21l-4.35-4.35"/>
@@ -164,20 +119,7 @@ export function SearchBar() {
           value={query}
           onChange={handleInputChange}
           placeholder="Search song, artist..."
-          style={{
-            flex: 1,
-            background: 'transparent',
-            border: 'none',
-            outline: 'none',
-            boxShadow: 'none',
-            padding: '0.75rem 1rem',
-            fontSize: '1.125rem',
-            color: '#ffffff',
-            fontWeight: 500,
-            minWidth: 0,
-          }}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          className="search-bar-input"
           aria-label="Search for music"
           autoComplete="off"
         />
@@ -186,30 +128,7 @@ export function SearchBar() {
           <button
             type="button"
             onClick={handleClear}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              background: 'rgba(60, 60, 60, 0.8)',
-              border: 'none',
-              color: '#aaaaaa',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              marginLeft: '0.5rem',
-              flexShrink: 0,
-              transform: isHovered ? 'scale(1.1)' : 'scale(1)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(80, 80, 80, 0.9)';
-              e.currentTarget.style.color = '#ffffff';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(60, 60, 60, 0.8)';
-              e.currentTarget.style.color = '#aaaaaa';
-            }}
+            className="search-bar-clear-btn"
             aria-label="Clear search"
           >
             <svg 
