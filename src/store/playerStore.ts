@@ -53,6 +53,7 @@ interface UIStore {
   theme: 'light' | 'dark';
   
   toggleSidebar: () => void;
+  closeSidebar: () => void;
   setCurrentView: (view: 'search' | 'playlists' | 'favorites') => void;
   setTheme: (theme: 'light' | 'dark') => void;
 }
@@ -76,13 +77,40 @@ const saveToLocalStorage = <T>(key: string, value: T): void => {
   }
 };
 
+const getUniquePlaylistName = (baseName: string, existingPlaylists: Playlist[], excludeId?: string): string => {
+  const existingNames = new Set(
+    existingPlaylists
+      .filter(p => p.id !== excludeId)
+      .map(p => p.name.trim().toLowerCase())
+  );
+
+  const trimmedBase = baseName.trim();
+  if (!existingNames.has(trimmedBase.toLowerCase())) {
+    return trimmedBase;
+  }
+
+  let counter = 1;
+  while (existingNames.has(`${trimmedBase} (${counter})`.toLowerCase())) {
+    counter++;
+  }
+
+  return `${trimmedBase} (${counter})`;
+};
+
+const areTracksIdentical = (tracksA: PlaylistTrack[] | Track[], tracksB: PlaylistTrack[] | Track[]): boolean => {
+  if (tracksA.length !== tracksB.length) return false;
+  const idsA = tracksA.map(t => String(t.id)).join(',');
+  const idsB = tracksB.map(t => String(t.id)).join(',');
+  return idsA === idsB;
+};
+
 export const usePlayerStore = create<AppStore>()(
   subscribeWithSelector((set, get) => ({
     currentTrack: null,
     isPlaying: false,
     currentTime: 0,
     duration: 0,
-    volume: loadFromLocalStorage('player-volume', 75),
+    volume: loadFromLocalStorage('player-volume', 80),
     isMuted: false,
     queue: [],
     currentIndex: -1,
@@ -98,19 +126,20 @@ export const usePlayerStore = create<AppStore>()(
     playlists: loadFromLocalStorage('playlists', []),
     favorites: loadFromLocalStorage('favorites', []),
 
-    isSidebarOpen: typeof window !== 'undefined' ? window.innerWidth > 768 : true,
+    isSidebarOpen: false,
     currentView: 'search',
-    theme: loadFromLocalStorage('theme', 'light'),
+    theme: loadFromLocalStorage('theme', 'dark'),
 
     playTrack: (track: Track, queue?: Track[], index?: number) => {
-      const newQueue = queue || [track];
-      const newIndex = index !== undefined ? index : 0;
-      
+      const state = get();
+      const newQueue = queue || (state.queue.length > 0 ? state.queue : [track]);
+      const newIndex = index !== undefined ? index : newQueue.findIndex(t => t.id === track.id);
+
       set({
         currentTrack: track,
         isPlaying: true,
         queue: newQueue,
-        currentIndex: newIndex,
+        currentIndex: newIndex >= 0 ? newIndex : 0,
         currentTime: 0
       });
     },
@@ -124,10 +153,7 @@ export const usePlayerStore = create<AppStore>()(
       let nextIndex = state.currentIndex + 1;
       
       if (state.isShuffling) {
-        const availableIndices = state.queue
-          .map((_, i) => i)
-          .filter(i => i !== state.currentIndex);
-        nextIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+        nextIndex = Math.floor(Math.random() * state.queue.length);
       } else if (nextIndex >= state.queue.length) {
         if (state.repeatMode === 'all') {
           nextIndex = 0;
@@ -221,9 +247,10 @@ export const usePlayerStore = create<AppStore>()(
 
     createPlaylist: (name: string) => {
       const state = get();
+      const uniqueName = getUniquePlaylistName(name, state.playlists);
       const newPlaylist: Playlist = {
         id: Date.now().toString(),
-        name,
+        name: uniqueName,
         tracks: [],
         createdAt: Date.now(),
         updatedAt: Date.now()
@@ -242,8 +269,9 @@ export const usePlayerStore = create<AppStore>()(
 
     renamePlaylist: (id: string, name: string) => {
       const state = get();
+      const uniqueName = getUniquePlaylistName(name, state.playlists, id);
       const newPlaylists = state.playlists.map(p => 
-        p.id === id ? { ...p, name, updatedAt: Date.now() } : p
+        p.id === id ? { ...p, name: uniqueName, updatedAt: Date.now() } : p
       );
       set({ playlists: newPlaylists });
       saveToLocalStorage('playlists', newPlaylists);
@@ -312,19 +340,32 @@ export const usePlayerStore = create<AppStore>()(
     },
 
     importPlaylist: (data: string) => {
-      try {
-        const playlist: Playlist = JSON.parse(data);
-        const state = get();
-        playlist.id = Date.now().toString(); 
-        const newPlaylists = [...state.playlists, playlist];
-        set({ playlists: newPlaylists });
-        saveToLocalStorage('playlists', newPlaylists);
-      } catch (error) {
-        console.error('Failed to import playlist:', error);
+      const playlist = JSON.parse(data);
+      if (!playlist || typeof playlist !== 'object' || typeof playlist.name !== 'string' || !Array.isArray(playlist.tracks)) {
+        throw new Error('Invalid playlist file structure');
       }
+      const state = get();
+
+      const hasExactSameTracks = state.playlists.some(p => areTracksIdentical(p.tracks, playlist.tracks));
+      if (hasExactSameTracks) {
+        throw new Error('Playlist already exists.');
+      }
+
+      const uniqueName = getUniquePlaylistName(playlist.name, state.playlists);
+      const importedPlaylist: Playlist = {
+        ...playlist,
+        id: Date.now().toString(),
+        name: uniqueName,
+        createdAt: playlist.createdAt || Date.now(),
+        updatedAt: Date.now()
+      };
+      const newPlaylists = [...state.playlists, importedPlaylist];
+      set({ playlists: newPlaylists });
+      saveToLocalStorage('playlists', newPlaylists);
     },
 
     toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
+    closeSidebar: () => set({ isSidebarOpen: false }),
     setCurrentView: (view: 'search' | 'playlists' | 'favorites') => set({ currentView: view }),
     
     setTheme: (theme: 'light' | 'dark') => {

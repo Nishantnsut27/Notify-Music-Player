@@ -160,15 +160,10 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (window.innerWidth <= 768) {
-      const sidebar = document.querySelector('.sidebar');
-      const overlay = document.querySelector('.sidebar-overlay') as HTMLElement;
-      if (sidebar && overlay) {
-        sidebar.classList.remove('sidebar-open');
-        overlay.style.display = 'none';
-      }
+    if (window.innerWidth <= 768 && isSidebarOpen) {
+      usePlayerStore.getState().closeSidebar();
     }
-  }, [currentView]);
+  }, [currentView, isSidebarOpen]);
 
   const renderMainContent = () => {
     switch (currentView) {
@@ -215,11 +210,7 @@ function App() {
             position: 'relative',
             zIndex: 2,
           }}>
-            <div className="page-header" style={{
-              margin: '0',
-              padding: '2rem 2rem 0 2rem',
-              marginBottom: '2rem'
-            }}>
+            <div className="page-header">
               <div className="page-header-content">
                 <div>
                   <h1 className="page-title">Your Favorites</h1>
@@ -266,11 +257,7 @@ function App() {
             position: 'relative',
             zIndex: 2,
           }}>
-            <div className="page-header" style={{
-              margin: '0',
-              padding: '2rem 2rem 0 2rem',
-              marginBottom: '2rem'
-            }}>
+            <div className="page-header">
               <h1 className="page-title">Your Playlists</h1>
               <p className="page-subtitle">
                 {playlists.length} {playlists.length === 1 ? 'playlist' : 'playlists'}
@@ -396,18 +383,9 @@ function App() {
             aria-label="Toggle menu"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              {isSidebarOpen ? (
-                <>
-                  <path d="M18 6L6 18" />
-                  <path d="M6 6l12 12" />
-                </>
-              ) : (
-                <>
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <line x1="3" y1="12" x2="21" y2="12" />
-                  <line x1="3" y1="18" x2="21" y2="18" />
-                </>
-              )}
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
             </svg>
           </button>
 

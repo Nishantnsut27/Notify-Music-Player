@@ -26,8 +26,16 @@ export function Sidebar() {
     exportPlaylist,
     importPlaylist,
     isSidebarOpen,
-    toggleSidebar
+    toggleSidebar,
+    closeSidebar
   } = usePlayerStore();
+
+  const handleNavClick = (view: 'search' | 'favorites' | 'playlists') => {
+    setCurrentView(view);
+    if (window.innerWidth <= 768) {
+      closeSidebar();
+    }
+  };
 
   const handleCreatePlaylist = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,9 +61,22 @@ export function Sidebar() {
   const handleImportPlaylist = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const isJsonExtension = file.name.toLowerCase().endsWith('.json');
+      const isJsonMime = !file.type || file.type === 'application/json' || file.type === 'text/json';
+
+      if (!isJsonExtension || !isJsonMime) {
+        setNoticeModal({
+          title: 'Import Failed',
+          message: 'Failed to import playlist. Only .json playlist files are supported.'
+        });
+        e.target.value = '';
+        setShowImportExport(null);
+        return;
+      }
+
       const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result;
+      reader.onload = (event) => {
+        const result = event.target?.result;
         if (typeof result === 'string') {
           try {
             importPlaylist(result);
@@ -63,13 +84,22 @@ export function Sidebar() {
               title: 'Playlist Imported',
               message: 'Your playlist has been successfully imported into Notify Music Player.'
             });
-          } catch {
+          } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : 'Failed to import playlist. Please check that the file format is valid JSON.';
             setNoticeModal({
               title: 'Import Failed',
-              message: 'Failed to import playlist. Please check that the file format is valid JSON.'
+              message: errorMsg.includes('already exists')
+                ? 'Playlist already exists.'
+                : errorMsg
             });
           }
         }
+      };
+      reader.onerror = () => {
+        setNoticeModal({
+          title: 'Import Failed',
+          message: 'Failed to read file. Please check that the file is not corrupted.'
+        });
       };
       reader.readAsText(file);
     }
@@ -116,7 +146,7 @@ export function Sidebar() {
           <ul className="sidebar-nav-list">
             <li>
               <button
-                onClick={() => setCurrentView('search')}
+                onClick={() => handleNavClick('search')}
                 className={`sidebar-nav-item ${currentView === 'search' ? 'sidebar-nav-item-active' : ''}`}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -129,7 +159,7 @@ export function Sidebar() {
             
             <li>
               <button
-                onClick={() => setCurrentView('favorites')}
+                onClick={() => handleNavClick('favorites')}
                 className={`sidebar-nav-item ${currentView === 'favorites' ? 'sidebar-nav-item-active' : ''}`}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill={currentView === 'favorites' ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -195,7 +225,7 @@ export function Sidebar() {
                 {playlists.map((playlist) => (
                   <li key={playlist.id} className="sidebar-playlist-item">
                     <button
-                      onClick={() => setCurrentView('playlists')}
+                      onClick={() => handleNavClick('playlists')}
                       className="sidebar-playlist-button"
                     >
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -205,9 +235,6 @@ export function Sidebar() {
                         <line x1="9" y1="17" x2="13" y2="17" />
                       </svg>
                       <span className="truncate">{playlist.name}</span>
-                      {playlist.tracks.length > 0 && (
-                        <span className="sidebar-badge">{playlist.tracks.length}</span>
-                      )}
                     </button>
                     
                     <div className="sidebar-playlist-actions" style={{ position: 'relative' }}>

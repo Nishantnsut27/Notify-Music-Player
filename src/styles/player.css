@@ -298,17 +298,19 @@
 
 .track-visualizer-overlay {
   position: absolute;
-  bottom: 4px;
-  right: 4px;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.75);
-  padding: 3px 5px;
-  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(4px);
-  border: 1px solid rgba(29, 185, 84, 0.3);
+  border-radius: 6px;
+  border: 1px solid rgba(29, 185, 84, 0.4);
   z-index: 5;
+  transition: all 0.3s ease;
 }
 
 .track-album-modern {
@@ -323,35 +325,45 @@
 .track-metadata-modern {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   font-size: 0.7rem;
   color: #6a6a6a;
   margin-top: 0.15rem;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .track-duration-modern {
   font-weight: 500;
   color: #b3b3b3;
+  flex-shrink: 0;
 }
 
 .track-genre-modern {
   background: linear-gradient(135deg, rgba(29, 185, 84, 0.2), rgba(29, 185, 84, 0.1));
   color: #1ed760;
-  padding: 0.2rem 0.6rem;
+  padding: 0.15rem 0.5rem;
   border-radius: 12px;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border: 1px solid rgba(29, 185, 84, 0.3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+  flex-shrink: 1;
 }
 
 .track-actions-modern {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.35rem;
   opacity: 0;
   transition: opacity 0.3s ease;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .track-item-modern:hover .track-actions-modern {
@@ -804,8 +816,49 @@
 
   .spotify-player-card {
     background: #121212 !important;
-    height: 90px;
-    padding: 8px 15px;
+    height: 85px;
+    padding: 6px 12px;
+  }
+
+  .close-btn {
+    display: none !important;
+  }
+
+  .progress-bar-container {
+    position: absolute !important;
+    top: 0 !important;
+    bottom: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 4px !important;
+    z-index: 20 !important;
+    border-top: none !important;
+    border-bottom: 1px solid rgba(29, 185, 84, 0.3) !important;
+  }
+
+  .progress-bar-container:hover {
+    height: 6px !important;
+  }
+
+  .top {
+    margin-top: 6px !important;
+  }
+
+  .time_now {
+    bottom: 6px !important;
+    top: auto !important;
+    left: 12px !important;
+    font-size: 10px !important;
+    color: #b3b3b3 !important;
+  }
+  
+  .time_full {
+    bottom: 6px !important;
+    top: auto !important;
+    right: 12px !important;
+    font-size: 10px !important;
+    color: #b3b3b3 !important;
   }
 
   .volume {
@@ -814,62 +867,109 @@
   }
 
   .controls {
-    gap: 6px;
-    bottom: 10px;
+    gap: 4px;
+    bottom: 6px;
   }
   
   .control-btn {
-    padding: 6px;
+    padding: 4px;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+  
+  .play-btn {
+    transform: scale(1.05);
     width: 36px;
     height: 36px;
     min-width: 36px;
     min-height: 36px;
   }
   
-  .play-btn {
-    transform: scale(1.05);
+  .track-item-modern,
+  .track-item-modern:hover,
+  .track-item-modern.active,
+  .track-list-container-modern.has-hovered-track .track-item-modern.hovered {
+    transform: none !important;
+    box-shadow: none;
+  }
+
+  .track-item-modern {
+    padding: 0.5rem;
+    gap: 0.5rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .track-artwork-modern {
     width: 40px;
     height: 40px;
   }
   
-  .track-item-modern {
-    padding: 0.75rem;
-    gap: 0.75rem;
-  }
-  
-  .track-artwork-modern {
-    width: 44px;
-    height: 44px;
-  }
-  
   .track-title-modern {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
   }
   
   .track-artist-modern {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
   }
   
   .track-actions-modern {
     opacity: 1;
-    flex-direction: column;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
     gap: 0.25rem;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .track-actions-modern .icon-button {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    min-height: 30px;
   }
 }
 
 @media (max-width: 480px) {
+  .modern-track-list {
+    padding: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
   .spotify-player-card {
     height: 80px;
-    padding: 6px 10px;
+    padding: 4px 8px;
   }
   
+  .top {
+    margin-top: 5px !important;
+  }
+
+  .time_now {
+    bottom: 4px !important;
+    top: auto !important;
+    left: 8px !important;
+    font-size: 8px !important;
+  }
+  
+  .time_full {
+    bottom: 4px !important;
+    top: auto !important;
+    right: 8px !important;
+    font-size: 8px !important;
+  }
+
   .pfp {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
   }
   
   .title-1 {
-    font-size: 13px;
+    font-size: 12px;
   }
   
   .title-2 {
@@ -877,64 +977,67 @@
   }
   
   .controls {
-    bottom: 6px;
-    gap: 4px;
-    padding: 4px 8px;
+    bottom: 4px;
+    gap: 2px;
+    padding: 2px 6px;
+    max-width: calc(100vw - 10px);
+    box-sizing: border-box;
   }
   
   .control-btn {
-    width: 30px;
-    height: 30px;
-    padding: 4px;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    padding: 3px;
   }
   
   .play-btn {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
   }
   
   .track-item-modern {
-    padding: 0.75rem;
-    gap: 0.75rem;
+    padding: 0.4rem 0.5rem;
+    gap: 0.4rem;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .track-artwork-modern {
-    width: 48px;
-    height: 48px;
-    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
   }
   
   .track-list-title-modern {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
   }
   
   .track-title-modern {
-    font-size: 0.95rem;
+    font-size: 0.825rem;
   }
   
   .track-artist-modern {
-    font-size: 0.8rem;
-  }
-  
-  .time_now {
-    bottom: 4px;
-    left: 10px;
-    font-size: 8px;
-  }
-  
-  .time_full {
-    bottom: 4px;
-    right: 10px;
-    font-size: 8px;
+    font-size: 0.725rem;
   }
   
   .playing {
-    width: 25px;
-    height: 16px;
+    width: 20px;
+    height: 14px;
   }
   
   .greenline {
     width: 2px;
-    height: 16px;
+    height: 14px;
+  }
+
+  .track-genre-modern {
+    max-width: 65px;
+    font-size: 0.6rem;
+    padding: 0.1rem 0.4rem;
   }
 }

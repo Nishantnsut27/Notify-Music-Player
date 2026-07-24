@@ -80,15 +80,7 @@ export function SearchBar() {
   return (
     <form 
       onSubmit={handleSubmit} 
-      style={{ 
-        width: '100%', 
-        maxWidth: '100%', 
-        margin: '0',
-        padding: '2rem',
-        position: 'relative',
-        display: 'flex',
-        justifyContent: 'center'
-      }}
+      className="search-bar-form"
     >
       <div 
         style={{

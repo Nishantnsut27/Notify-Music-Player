@@ -84,10 +84,10 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
   }, [isPlaying, barCount, color]);
 
   const dimensions = size === 'small' 
-    ? { w: 22, h: 16 } 
+    ? { w: 26, h: 18 } 
     : size === 'medium' 
-    ? { w: 32, h: 22 } 
-    : { w: 48, h: 28 };
+    ? { w: 38, h: 26 } 
+    : { w: 54, h: 34 };
 
   return (
     <canvas

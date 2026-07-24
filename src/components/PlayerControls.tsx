@@ -224,7 +224,7 @@ export function PlayerControls() {
 
         {currentTrack && (
           <div className="player-visualizer-container" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-            <AudioVisualizer isPlaying={isPlaying} size="small" barCount={5} color="#1db954" />
+            <AudioVisualizer isPlaying={isPlaying} size="medium" barCount={5} color="#1db954" />
           </div>
         )}
       </div>

@@ -117,6 +117,19 @@
 
 .page-header {
   margin-bottom: 2rem;
+  padding: 2rem 2rem 0 2rem;
+  box-sizing: border-box;
+}
+
+.search-bar-form {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 2rem;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .page-header-content {
@@ -509,6 +522,15 @@
 }
 
 @media (max-width: 768px) {
+  .page-header {
+    padding: 1.25rem 1rem 0 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .search-bar-form {
+    padding: 1.25rem 1rem;
+  }
+
   .page-title {
     font-size: var(--font-size-2xl);
   }
@@ -546,10 +568,19 @@
 }
 
 @media (max-width: 480px) {
+  .page-header {
+    padding: 1rem 0.75rem 0 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .search-bar-form {
+    padding: 0.75rem 0.5rem;
+  }
+
   .page-title {
     font-size: var(--font-size-xl);
     line-height: 1.3;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
     white-space: normal;
     overflow: visible;
     text-overflow: unset;
@@ -558,7 +589,7 @@
   .page-subtitle {
     font-size: var(--font-size-base);
     line-height: 1.4;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
   }
 }
 
@@ -619,6 +650,13 @@
   background: rgba(29, 185, 84, 0.15);
   color: #1ed760;
   border: 1px solid rgba(29, 185, 84, 0.3);
+}
+
+.confirm-modal-icon.icon-success {
+  background: rgba(29, 185, 84, 0.2);
+  color: #1ed760;
+  border: 1px solid rgba(29, 185, 84, 0.4);
+  box-shadow: 0 0 15px rgba(29, 185, 84, 0.25);
 }
 
 .confirm-modal-title {
